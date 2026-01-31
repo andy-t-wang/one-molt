@@ -4,6 +4,7 @@
 // Displays device info and handles WorldID verification flow
 
 import { use, useEffect, useState } from "react";
+import Image from "next/image";
 import {
   IDKitWidget,
   ISuccessResult,
@@ -220,53 +221,58 @@ export default function RegisterPage({ params }: PageProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md p-8 bg-white rounded-lg shadow-md">
-          <div className="text-green-600 mb-4">
-            <svg
-              className="w-12 h-12 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+          <div className="text-center mb-6">
+            <Image
+              src="/logo.png"
+              alt="OneMolt"
+              width={64}
+              height={64}
+              className="mx-auto mb-4"
+            />
+            <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium mb-3">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Verified Human
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              You&apos;re All Set!
+            </h1>
+            <p className="text-sm text-gray-500">
+              Your molt is now verified as being operated by a unique human
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-            Registration Complete!
-          </h1>
 
-          <div className="space-y-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-md">
-              <p className="text-sm font-medium text-gray-500 mb-1">
-                Device ID
+          <div className="space-y-3 mb-6">
+            <div className="bg-gray-50 p-3 rounded-md">
+              <p className="text-xs font-medium text-gray-500 mb-1">
+                Molt ID
               </p>
-              <p className="text-xs font-mono text-gray-900 break-all">
+              <p className="text-xs font-mono text-gray-700 break-all">
                 {session?.deviceId}
               </p>
             </div>
 
             {registration && (
               <>
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    Verification Level
-                  </p>
-                  <p className="text-sm text-gray-900 capitalize">
-                    {registration.verificationLevel}
-                  </p>
-                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1 bg-gray-50 p-3 rounded-md">
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Verification
+                    </p>
+                    <p className="text-sm text-gray-900 capitalize">
+                      {registration.verificationLevel === "orb" ? "Orb (Biometric)" : "Device"}
+                    </p>
+                  </div>
 
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    Registered At
-                  </p>
-                  <p className="text-sm text-gray-900">
-                    {new Date(registration.registeredAt).toLocaleString()}
-                  </p>
+                  <div className="flex-1 bg-gray-50 p-3 rounded-md">
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Registered
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {new Date(registration.registeredAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               </>
             )}
@@ -279,7 +285,7 @@ export default function RegisterPage({ params }: PageProps) {
                 onClick={() => {
                   const verifyUrl = `${window.location.origin}/verify/${encodeURIComponent(registration.publicKey)}`;
                   const text = encodeURIComponent(
-                    "Verifying my molt bot has a human behind it! 🤖👤 #OneMolt @worldcoin",
+                    "My AI agent is now verified as human-operated with OneMolt + World ID! 🤖✓ #OneMolt",
                   );
                   const url = encodeURIComponent(verifyUrl);
                   window.open(
@@ -316,8 +322,8 @@ export default function RegisterPage({ params }: PageProps) {
             </div>
           )}
 
-          <p className="text-sm text-gray-600 text-center">
-            You can close this window and return to your CLI.
+          <p className="text-sm text-gray-500 text-center">
+            You can close this window now. Your molt is ready to go!
           </p>
         </div>
       </div>
@@ -457,33 +463,45 @@ export default function RegisterPage({ params }: PageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          Complete Registration
-        </h1>
+        <div className="text-center mb-6">
+          <Image
+            src="/logo.png"
+            alt="OneMolt"
+            width={64}
+            height={64}
+            className="mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Verify Your Molt
+          </h1>
+          <p className="text-sm text-gray-500">
+            Prove there&apos;s a real human behind your AI agent
+          </p>
+        </div>
 
         <div className="mb-6 space-y-4">
-          <div className="bg-blue-50 p-4 rounded-md">
-            <p className="text-sm font-medium text-blue-900 mb-2">
-              Step 1: Signature Verified ✓
+          <div className="bg-green-50 border border-green-200 p-4 rounded-md">
+            <p className="text-sm font-medium text-green-800 mb-1">
+              Your molt is connected
             </p>
-            <p className="text-xs text-blue-700">
-              Your device ownership has been verified
+            <p className="text-xs text-green-600">
+              We confirmed this is your molt bot
             </p>
           </div>
 
           <div className="bg-gray-50 p-4 rounded-md">
-            <p className="text-sm font-medium text-gray-900 mb-2">
-              Step 2: WorldID Verification
+            <p className="text-sm font-medium text-gray-900 mb-1">
+              Now prove you&apos;re human
             </p>
-            <p className="text-xs text-gray-600 mb-3">
-              Prove you are a unique human using World ID
+            <p className="text-xs text-gray-600 mb-4">
+              Scan with the World App to link your unique human identity to this molt. This ensures one person can only have one verified molt.
             </p>
 
-            <div className="bg-gray-50 p-3 rounded-md mb-3">
+            <div className="bg-white border border-gray-200 p-3 rounded-md">
               <p className="text-xs font-medium text-gray-500 mb-1">
-                Device ID
+                Molt ID
               </p>
-              <p className="text-xs font-mono text-gray-900 break-all">
+              <p className="text-xs font-mono text-gray-700 break-all">
                 {session?.deviceId}
               </p>
             </div>
@@ -523,11 +541,19 @@ export default function RegisterPage({ params }: PageProps) {
         </div>
 
         <div className="mt-6 text-center space-y-2">
-          <p className="text-xs text-gray-500">
-            Expires: {session && new Date(session.expiresAt).toLocaleString()}
+          <p className="text-xs text-gray-400">
+            Don&apos;t have World App?{" "}
+            <a
+              href="https://world.org/world-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              Download it free
+            </a>
           </p>
           <p className="text-xs text-gray-400">
-            Having trouble? You can retry verification multiple times
+            Link expires {session && new Date(session.expiresAt).toLocaleString()}
           </p>
         </div>
       </div>

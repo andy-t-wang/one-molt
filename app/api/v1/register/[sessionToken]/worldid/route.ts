@@ -80,27 +80,42 @@ export async function POST(
       )
     }
 
-    // Verify WorldID proof with WorldID API
-    // Use device_id from session as the signal to ensure binding
-    const verificationResult = await verifyWorldIDProof(
-      body.proof,
-      session.device_id
-    )
+    // Check if this is a replacement request with an already-verified proof
+    // WorldID proofs are single-use, so we store the verified proof in the session
+    // and skip re-verification on replacement
+    const sessionHasVerifiedProof = session.worldid_proof &&
+      (session.worldid_proof as Record<string, unknown>).nullifier_hash === body.proof.nullifier_hash
 
-    if (!verificationResult.success) {
-      // Update session with failed status
+    if (!sessionHasVerifiedProof) {
+      // First time - verify with WorldID API
+      const verificationResult = await verifyWorldIDProof(
+        body.proof,
+        session.device_id
+      )
+
+      if (!verificationResult.success) {
+        // Update session with failed status
+        await supabase
+          .from('registration_sessions')
+          .update({
+            status: 'failed',
+            worldid_proof: body.proof as unknown as Record<string, unknown>,
+          })
+          .eq('session_token', sessionToken)
+
+        return NextResponse.json<ApiError>(
+          { error: verificationResult.error || 'WorldID verification failed' },
+          { status: 401 }
+        )
+      }
+
+      // Store the verified proof in the session for potential replacement flow
       await supabase
         .from('registration_sessions')
         .update({
-          status: 'failed',
           worldid_proof: body.proof as unknown as Record<string, unknown>,
         })
         .eq('session_token', sessionToken)
-
-      return NextResponse.json<ApiError>(
-        { error: verificationResult.error || 'WorldID verification failed' },
-        { status: 401 }
-      )
     }
 
     // Check if nullifier hash already used (duplicate molt detection)

@@ -158,4 +158,4 @@ async function verifyMolt(
 
 - Website: https://onemolt.ai
 - Developer Docs: https://onemolt.ai/developers
-- WorldID: https://worldcoin.org/world-id
+- WorldID: https://world.org/world-id

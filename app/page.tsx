@@ -378,7 +378,7 @@ export default function Home() {
           <p className="mb-2">
             Powered by{" "}
             <a
-              href="https://worldcoin.org"
+              href="https://world.org/world-id"
               className="text-red-500 hover:underline"
               target="_blank"
               rel="noopener noreferrer"
