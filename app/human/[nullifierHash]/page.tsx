@@ -26,8 +26,15 @@ export default function HumanGraph() {
   const [data, setData] = useState<HumanMoltsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [myNullifier, setMyNullifier] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check for cached nullifier
+    const cached = localStorage.getItem('onemolt_nullifier');
+    if (cached) {
+      setMyNullifier(cached);
+    }
+
     const fetchData = async () => {
       try {
         const response = await fetch(
@@ -86,6 +93,14 @@ export default function HumanGraph() {
               </span>
             </Link>
             <div className="flex items-center gap-4">
+              {myNullifier && (
+                <Link
+                  href={`/human/${encodeURIComponent(myNullifier)}`}
+                  className={`text-sm font-medium ${myNullifier === nullifierHash ? 'text-red-500' : 'text-red-500 hover:text-red-600'}`}
+                >
+                  My Swarm
+                </Link>
+              )}
               <Link
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"

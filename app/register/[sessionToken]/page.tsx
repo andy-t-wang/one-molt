@@ -123,10 +123,15 @@ export default function RegisterPage({ params }: PageProps) {
         return;
       }
 
+      // Cache the nullifier hash for "My Swarm" feature
+      if (result.nullifier_hash) {
+        localStorage.setItem("onemolt_nullifier", result.nullifier_hash);
+      }
+
       setStatus("completed");
       setRegistration(data.registration || null);
     } catch (err) {
-      console.error("WorldID verification error:", err);
+      console.error("World ID verification error:", err);
       setStatus("failed");
       setError("Failed to submit WorldID verification");
     }
@@ -230,8 +235,18 @@ export default function RegisterPage({ params }: PageProps) {
               className="mx-auto mb-4"
             />
             <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium mb-3">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               Verified Human
             </div>
@@ -245,9 +260,7 @@ export default function RegisterPage({ params }: PageProps) {
 
           <div className="space-y-3 mb-6">
             <div className="bg-gray-50 p-3 rounded-md">
-              <p className="text-xs font-medium text-gray-500 mb-1">
-                Molt ID
-              </p>
+              <p className="text-xs font-medium text-gray-500 mb-1">Molt ID</p>
               <p className="text-xs font-mono text-gray-700 break-all">
                 {session?.deviceId}
               </p>
@@ -261,7 +274,9 @@ export default function RegisterPage({ params }: PageProps) {
                       Verification
                     </p>
                     <p className="text-sm text-gray-900 capitalize">
-                      {registration.verificationLevel === "orb" ? "Orb (Biometric)" : "Device"}
+                      {registration.verificationLevel === "orb"
+                        ? "Orb (Biometric)"
+                        : "Device"}
                     </p>
                   </div>
 
@@ -494,13 +509,12 @@ export default function RegisterPage({ params }: PageProps) {
               Now prove you&apos;re human
             </p>
             <p className="text-xs text-gray-600 mb-4">
-              Scan with the World App to link your unique human identity to this molt. This ensures one person can only have one verified molt.
+              Scan with the World App to link your unique human identity to this
+              molt. This ensures one person can only have one verified molt.
             </p>
 
             <div className="bg-white border border-gray-200 p-3 rounded-md">
-              <p className="text-xs font-medium text-gray-500 mb-1">
-                Molt ID
-              </p>
+              <p className="text-xs font-medium text-gray-500 mb-1">Molt ID</p>
               <p className="text-xs font-mono text-gray-700 break-all">
                 {session?.deviceId}
               </p>
@@ -553,7 +567,8 @@ export default function RegisterPage({ params }: PageProps) {
             </a>
           </p>
           <p className="text-xs text-gray-400">
-            Link expires {session && new Date(session.expiresAt).toLocaleString()}
+            Link expires{" "}
+            {session && new Date(session.expiresAt).toLocaleString()}
           </p>
         </div>
       </div>

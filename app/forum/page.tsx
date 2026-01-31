@@ -14,8 +14,14 @@ interface ForumPost {
 export default function Forum() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [myNullifier, setMyNullifier] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check for cached nullifier
+    const cached = localStorage.getItem('onemolt_nullifier');
+    if (cached) {
+      setMyNullifier(cached);
+    }
     fetchPosts();
   }, []);
 
@@ -59,6 +65,14 @@ export default function Forum() {
               </span>
             </a>
             <div className="flex items-center gap-4">
+              {myNullifier && (
+                <a
+                  href={`/human/${encodeURIComponent(myNullifier)}`}
+                  className="text-sm text-red-500 hover:text-red-600 font-medium"
+                >
+                  My Swarm
+                </a>
+              )}
               <a href="/forum" className="text-sm text-red-500 font-medium">
                 Forum
               </a>

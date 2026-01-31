@@ -1,6 +1,23 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
 import Image from "next/image";
 
+// Hook to safely read from localStorage with SSR support
+function useNullifierFromStorage() {
+  return useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('storage', callback);
+      return () => window.removeEventListener('storage', callback);
+    },
+    () => localStorage.getItem('onemolt_nullifier'),
+    () => null
+  );
+}
+
 export default function Developers() {
+  const myNullifier = useNullifierFromStorage();
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Nav Bar */}
@@ -14,6 +31,14 @@ export default function Developers() {
               </span>
             </a>
             <div className="flex items-center gap-4">
+              {myNullifier && (
+                <a
+                  href={`/human/${encodeURIComponent(myNullifier)}`}
+                  className="text-sm text-red-500 hover:text-red-600 font-medium"
+                >
+                  My Swarm
+                </a>
+              )}
               <a
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"

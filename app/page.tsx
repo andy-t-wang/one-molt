@@ -20,8 +20,15 @@ export default function Home() {
   const [searchResult, setSearchResult] = useState<MoltStatus | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [installMethod, setInstallMethod] = useState<"claw" | "manual">("claw");
+  const [myNullifier, setMyNullifier] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check for cached nullifier
+    const cached = localStorage.getItem('onemolt_nullifier');
+    if (cached) {
+      setMyNullifier(cached);
+    }
+
     // Load Twitter widget script and render tweets
     const script = document.createElement("script");
     script.src = "https://platform.twitter.com/widgets.js";
@@ -81,6 +88,14 @@ export default function Home() {
               </span>
             </a>
             <div className="flex items-center gap-4">
+              {myNullifier && (
+                <a
+                  href={`/human/${encodeURIComponent(myNullifier)}`}
+                  className="text-sm text-red-500 hover:text-red-600 font-medium"
+                >
+                  My Swarm
+                </a>
+              )}
               <a
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
@@ -115,9 +130,6 @@ export default function Home() {
           </h1>
           <p className="text-xl text-gray-600 mb-2 max-w-2xl mx-auto">
             Give your agents the weight of a real human behind it
-          </p>
-          <p className="text-gray-500">
-            One human. One molt. <span className="text-red-500">Verified.</span>
           </p>
         </div>
 
