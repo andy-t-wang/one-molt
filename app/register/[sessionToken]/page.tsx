@@ -11,7 +11,7 @@ interface PageProps {
   params: Promise<{ sessionToken: string }>
 }
 
-type RegistrationStatus = 'loading' | 'pending' | 'verifying' | 'completed' | 'expired' | 'failed' | 'error'
+type RegistrationStatus = 'loading' | 'pending' | 'verifying' | 'completed' | 'expired' | 'failed' | 'error' | 'duplicate'
 
 export default function RegisterPage({ params }: PageProps) {
   const { sessionToken } = use(params)
@@ -19,6 +19,8 @@ export default function RegisterPage({ params }: PageProps) {
   const [session, setSession] = useState<RegistrationStatusResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [registration, setRegistration] = useState<WorldIDSubmitResponse['registration'] | null>(null)
+  const [existingDevice, setExistingDevice] = useState<{ deviceId: string; registeredAt: string } | null>(null)
+  const [pendingProof, setPendingProof] = useState<ISuccessResult | null>(null)
 
   // Load session data
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function RegisterPage({ params }: PageProps) {
   }, [sessionToken])
 
   // Handle WorldID verification success
-  const handleVerify = async (result: ISuccessResult) => {
+  const handleVerify = async (result: ISuccessResult, replaceExisting = false) => {
     setStatus('verifying')
     setError(null)
 
@@ -73,10 +75,21 @@ export default function RegisterPage({ params }: PageProps) {
             nullifier_hash: result.nullifier_hash,
             verification_level: result.verification_level,
           },
+          signal: session?.deviceId,
+          replaceExisting,
         }),
       })
 
       const data: WorldIDSubmitResponse = await response.json()
+
+      // Check for duplicate detection
+      if (data.duplicateDetected && data.existingDevice) {
+        setStatus('duplicate')
+        setExistingDevice(data.existingDevice)
+        setPendingProof(result)
+        setError(data.error || 'You already have a molt registered')
+        return
+      }
 
       if (!response.ok || !data.success) {
         setStatus('failed')
@@ -91,6 +104,12 @@ export default function RegisterPage({ params }: PageProps) {
       setStatus('failed')
       setError('Failed to submit WorldID verification')
     }
+  }
+
+  // Handle replacement confirmation
+  const handleReplace = async () => {
+    if (!pendingProof) return
+    await handleVerify(pendingProof, true)
   }
 
   // Render loading state
@@ -179,7 +198,7 @@ export default function RegisterPage({ params }: PageProps) {
     )
   }
 
-  // Render failed state
+  // Render failed state with easy retry
   if (status === 'failed') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -191,12 +210,81 @@ export default function RegisterPage({ params }: PageProps) {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">Verification Failed</h1>
           <p className="text-gray-600 text-center mb-4">{error || 'WorldID verification failed'}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Try Again
-          </button>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null)
+                setStatus('pending')
+              }}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+            >
+              Try Again
+            </button>
+
+            <p className="text-xs text-gray-500 text-center">
+              No need to restart - just scan the QR code again
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Render duplicate detection state
+  if (status === 'duplicate' && existingDevice) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md p-8 bg-white rounded-lg shadow-md">
+          <div className="text-yellow-600 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">Molt Already Registered</h1>
+          <p className="text-gray-600 text-center mb-4">
+            You already have a molt registered to your WorldID.
+          </p>
+
+          <div className="bg-gray-50 p-4 rounded-md mb-6">
+            <p className="text-sm font-medium text-gray-500 mb-2">Existing Molt</p>
+            <p className="text-xs font-mono text-gray-900 break-all mb-2">{existingDevice.deviceId}</p>
+            <p className="text-xs text-gray-500">
+              Registered: {new Date(existingDevice.registeredAt).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-md mb-6">
+            <p className="text-sm font-medium text-blue-900 mb-2">⚠️ One Molt Per Human</p>
+            <p className="text-xs text-blue-700">
+              Replacing your existing molt will deactivate it. You can only have one active molt at a time.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={handleReplace}
+              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors font-medium"
+            >
+              Replace with This Device
+            </button>
+
+            <button
+              onClick={() => {
+                setStatus('pending')
+                setError(null)
+                setExistingDevice(null)
+                setPendingProof(null)
+              }}
+              className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+
+            <p className="text-xs text-gray-500 text-center">
+              Need to manage multiple devices? Contact support.
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -256,9 +344,12 @@ export default function RegisterPage({ params }: PageProps) {
           </IDKitWidget>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
           <p className="text-xs text-gray-500">
             Expires: {session && new Date(session.expiresAt).toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400">
+            Having trouble? You can retry verification multiple times
           </p>
         </div>
       </div>

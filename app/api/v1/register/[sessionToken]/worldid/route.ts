@@ -53,6 +53,9 @@ export async function POST(
       )
     }
 
+    // Allow retries for 'failed' and 'pending' status
+    // This enables users to try WorldID verification multiple times
+
     // Check expiration
     const now = new Date()
     const expiresAt = new Date(session.expires_at)
@@ -69,8 +72,20 @@ export async function POST(
       )
     }
 
+    // Verify signal matches device ID from session
+    if (body.signal && body.signal !== session.device_id) {
+      return NextResponse.json<ApiError>(
+        { error: 'Signal mismatch - WorldID proof was created for a different device' },
+        { status: 400 }
+      )
+    }
+
     // Verify WorldID proof with WorldID API
-    const verificationResult = await verifyWorldIDProof(body.proof, body.signal)
+    // Use device_id from session as the signal to ensure binding
+    const verificationResult = await verifyWorldIDProof(
+      body.proof,
+      session.device_id
+    )
 
     if (!verificationResult.success) {
       // Update session with failed status
@@ -88,18 +103,38 @@ export async function POST(
       )
     }
 
-    // Check if nullifier hash already used
+    // Check if nullifier hash already used (duplicate molt detection)
     const { data: existingNullifier } = await supabase
       .from('registrations')
-      .select('device_id, nullifier_hash')
+      .select('device_id, registered_at, active')
       .eq('nullifier_hash', body.proof.nullifier_hash)
+      .eq('active', true)
       .single()
 
     if (existingNullifier) {
-      return NextResponse.json<ApiError>(
-        { error: 'WorldID proof already used for another registration' },
-        { status: 409 }
-      )
+      // Duplicate detected - same human trying to register another device
+      if (!body.replaceExisting) {
+        // First attempt - ask user if they want to replace
+        return NextResponse.json<WorldIDSubmitResponse>(
+          {
+            success: false,
+            duplicateDetected: true,
+            existingDevice: {
+              deviceId: existingNullifier.device_id,
+              registeredAt: existingNullifier.registered_at,
+            },
+            error: 'You already have a molt registered. Do you want to replace it with this device?',
+          },
+          { status: 409 }
+        )
+      } else {
+        // User confirmed replacement - deactivate old device
+        await supabase
+          .from('registrations')
+          .update({ active: false })
+          .eq('nullifier_hash', body.proof.nullifier_hash)
+          .eq('active', true)
+      }
     }
 
     // Get client info for audit

@@ -28,6 +28,7 @@ export interface WorldIDProof {
 export interface WorldIDSubmitRequest {
   proof: WorldIDProof
   signal?: string
+  replaceExisting?: boolean  // Set to true to replace existing molt
 }
 
 export interface WorldIDSubmitResponse {
@@ -40,6 +41,11 @@ export interface WorldIDSubmitResponse {
     registeredAt: string
   }
   error?: string
+  duplicateDetected?: boolean
+  existingDevice?: {
+    deviceId: string
+    registeredAt: string
+  }
 }
 
 export interface RegistrationStatusResponse {
@@ -157,20 +163,4 @@ export interface ApiError {
 // ============================================================================
 // WorldID API Types
 // ============================================================================
-
-export interface WorldIDVerifyRequest {
-  app_id: string
-  action: string
-  signal?: string
-  proof: string
-  merkle_root: string
-  nullifier_hash: string
-  verification_level: string
-}
-
-export interface WorldIDVerifyResponse {
-  success: boolean
-  code?: string
-  detail?: string
-  attribute?: string | null
-}
+// Note: We use ISuccessResult from @worldcoin/idkit for WorldID proof types
