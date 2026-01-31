@@ -8,6 +8,7 @@ import Image from "next/image";
 import {
   IDKitWidget,
   ISuccessResult,
+  VerificationLevel,
 } from "@worldcoin/idkit";
 import type {
   RegistrationStatusResponse,
@@ -33,17 +34,17 @@ let nullifierListeners: Array<() => void> = [];
 function subscribeToNullifier(callback: () => void) {
   nullifierListeners.push(callback);
   return () => {
-    nullifierListeners = nullifierListeners.filter(l => l !== callback);
+    nullifierListeners = nullifierListeners.filter((l) => l !== callback);
   };
 }
 function getNullifierSnapshot() {
-  return localStorage.getItem('onemolt_nullifier');
+  return localStorage.getItem("onemolt_nullifier");
 }
 function getNullifierServerSnapshot() {
   return null;
 }
 function notifyNullifierChange() {
-  nullifierListeners.forEach(l => l());
+  nullifierListeners.forEach((l) => l());
 }
 
 export default function RegisterPage({ params }: PageProps) {
@@ -65,7 +66,7 @@ export default function RegisterPage({ params }: PageProps) {
   const cachedNullifier = useSyncExternalStore(
     subscribeToNullifier,
     getNullifierSnapshot,
-    getNullifierServerSnapshot
+    getNullifierServerSnapshot,
   );
 
   // Load session data
@@ -471,7 +472,7 @@ export default function RegisterPage({ params }: PageProps) {
               ⚠️ Re-verifying Your Molt
             </p>
             <p className="text-xs text-blue-700">
-              Are you reassigning your molt to a new user? 
+              Are you reassigning your molt to a new user?
             </p>
           </div>
 
@@ -560,7 +561,7 @@ export default function RegisterPage({ params }: PageProps) {
             app_id={appId as `app_${string}`}
             action={action}
             signal={session?.deviceId || ""}
-            verification_level={"face" as const}
+            verification_level={"face" as VerificationLevel}
             onSuccess={handleVerify}
             onError={(error) => {
               console.error("WorldID widget error:", error);
