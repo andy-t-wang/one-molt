@@ -18,6 +18,7 @@ interface MoltStatusResponse {
   verified: boolean
   deviceId?: string
   publicKey?: string
+  moltSwarm?: string
   worldId: {
     verified: boolean
     verificationLevel?: string
@@ -31,6 +32,7 @@ interface MoltStatusResponse {
 interface HumanMoltsResponse {
   verified: boolean
   nullifierHash: string
+  moltSwarm: string
   molts: MoltInfo[]
   queryType: 'nullifier_hash'
 }
@@ -81,9 +83,12 @@ export async function GET(
         .order('registered_at', { ascending: false })
 
       if (!nullifierError && molts && molts.length > 0) {
+        const baseUrl = request.headers.get('host') || 'onemolt.ai'
+        const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
         const response: HumanMoltsResponse = {
           verified: true,
           nullifierHash: decodedId,
+          moltSwarm: `${protocol}://${baseUrl}/human/${encodeURIComponent(decodedId)}`,
           molts: molts.map((m: Registration) => ({
             deviceId: m.device_id,
             publicKey: m.public_key,
@@ -110,10 +115,13 @@ export async function GET(
     }
 
     // Found by device_id or public_key - return verification details
+    const baseUrl = request.headers.get('host') || 'onemolt.ai'
+    const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
     const response: MoltStatusResponse = {
       verified: true,
       deviceId: registration.device_id,
       publicKey: registration.public_key,
+      moltSwarm: `${protocol}://${baseUrl}/human/${encodeURIComponent(registration.nullifier_hash)}`,
       worldId: {
         verified: true,
         verificationLevel: registration.verification_level,
