@@ -114,7 +114,7 @@ export default function Home() {
             <span className="text-red-500">Molt</span>
           </h1>
           <p className="text-xl text-gray-600 mb-2 max-w-2xl mx-auto">
-            Give your agent the weight of a real human behind it
+            Give your agents the weight of a real human behind it
           </p>
           <p className="text-gray-500">
             One human. One molt. <span className="text-red-500">Verified.</span>
@@ -201,7 +201,9 @@ export default function Home() {
           <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
             AI agent networks are vulnerable to sybil attacks. Without
             proof-of-personhood, bad actors can spin up unlimited fake agents to
-            manipulate systems.
+            manipulate systems. One molt lets you tag your agents with a
+            cryptographic guarantee that there is a human behind each
+            molt.
           </p>
 
           {/* Embedded Tweet */}

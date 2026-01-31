@@ -118,75 +118,95 @@ export async function POST(
         .eq('session_token', sessionToken)
     }
 
-    // Check if nullifier hash already used (duplicate molt detection)
-    const { data: existingNullifier } = await supabase
-      .from('registrations')
-      .select('device_id, registered_at, active')
-      .eq('nullifier_hash', body.proof.nullifier_hash)
-      .eq('active', true)
-      .single()
-
-    if (existingNullifier) {
-      // Duplicate detected - same human trying to register another device
-      if (!body.replaceExisting) {
-        // First attempt - ask user if they want to replace
-        return NextResponse.json<WorldIDSubmitResponse>(
-          {
-            success: false,
-            duplicateDetected: true,
-            existingDevice: {
-              deviceId: existingNullifier.device_id,
-              registeredAt: existingNullifier.registered_at,
-            },
-            error: 'You already have a molt registered. Do you want to replace it with this device?',
-          },
-          { status: 409 }
-        )
-      } else {
-        // User confirmed replacement - deactivate old device
-        await supabase
-          .from('registrations')
-          .update({ active: false })
-          .eq('nullifier_hash', body.proof.nullifier_hash)
-          .eq('active', true)
-      }
-    }
-
     // Get client info for audit
     const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
-    // Create registration record
-    const { data: registration, error: registrationError } = await supabase
+    // Check if this public key (molt) is already registered
+    // One molt can only be registered to one human, but one human can have multiple molts
+    const { data: existingMolt } = await supabase
       .from('registrations')
-      .insert({
-        device_id: session.device_id,
-        public_key: session.public_key,
-        nullifier_hash: body.proof.nullifier_hash,
-        merkle_root: body.proof.merkle_root,
-        verification_level: body.proof.verification_level,
-        registration_signature: session.signature,
-        verified: true,
-        active: true,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-      })
-      .select()
+      .select('id, nullifier_hash, registered_at')
+      .eq('public_key', session.public_key)
       .single()
 
-    if (registrationError) {
-      console.error('Failed to create registration:', registrationError)
+    let registration
 
-      // Update session with failed status
-      await supabase
-        .from('registration_sessions')
-        .update({ status: 'failed' })
-        .eq('session_token', sessionToken)
+    if (existingMolt) {
+      // This molt is already registered - update it with new WorldID proof
+      const { data: updatedRegistration, error: updateError } = await supabase
+        .from('registrations')
+        .update({
+          nullifier_hash: body.proof.nullifier_hash,
+          merkle_root: body.proof.merkle_root,
+          verification_level: body.proof.verification_level,
+          registration_signature: session.signature,
+          verified: true,
+          active: true,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          last_verified_at: new Date().toISOString(),
+        })
+        .eq('id', existingMolt.id)
+        .select()
+        .single()
 
-      return NextResponse.json<ApiError>(
-        { error: 'Failed to complete registration' },
-        { status: 500 }
-      )
+      if (updateError) {
+        console.error('Failed to update registration:', updateError)
+        await supabase
+          .from('registration_sessions')
+          .update({ status: 'failed' })
+          .eq('session_token', sessionToken)
+
+        return NextResponse.json<ApiError>(
+          { error: 'Failed to update molt registration. Please try again.' },
+          { status: 500 }
+        )
+      }
+
+      registration = updatedRegistration
+    } else {
+      // New molt registration
+      const { data: newRegistration, error: insertError } = await supabase
+        .from('registrations')
+        .insert({
+          device_id: session.device_id,
+          public_key: session.public_key,
+          nullifier_hash: body.proof.nullifier_hash,
+          merkle_root: body.proof.merkle_root,
+          verification_level: body.proof.verification_level,
+          registration_signature: session.signature,
+          verified: true,
+          active: true,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+        })
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('Failed to create registration:', insertError)
+
+        // Check if it's a duplicate key error on public_key
+        if (insertError.code === '23505') {
+          return NextResponse.json<ApiError>(
+            { error: 'This molt is already registered. Try verifying again to update it.' },
+            { status: 409 }
+          )
+        }
+
+        await supabase
+          .from('registration_sessions')
+          .update({ status: 'failed' })
+          .eq('session_token', sessionToken)
+
+        return NextResponse.json<ApiError>(
+          { error: 'Failed to complete registration' },
+          { status: 500 }
+        )
+      }
+
+      registration = newRegistration
     }
 
     // Update session status to completed
