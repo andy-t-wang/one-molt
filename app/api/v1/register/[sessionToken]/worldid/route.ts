@@ -84,7 +84,7 @@ export async function POST(
     // WorldID proofs are single-use, so we store the verified proof in the session
     // and skip re-verification on replacement
     const sessionHasVerifiedProof = session.worldid_proof &&
-      (session.worldid_proof as Record<string, unknown>).nullifier_hash === body.proof.nullifier_hash
+      (session.worldid_proof as unknown as Record<string, unknown>).nullifier_hash === body.proof.nullifier_hash
 
     if (!sessionHasVerifiedProof) {
       // First time - verify with WorldID API
