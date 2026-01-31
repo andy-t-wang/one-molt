@@ -226,7 +226,7 @@ cmd_register_worldid() {
 
     # POST to API
     info "Sending registration request to server..."
-    local response=$(curl -s -w "\n%{http_code}" -X POST "${server}/api/v1/register/init" \
+    local response=$(curl -sL -w "\n%{http_code}" -X POST "${server}/api/v1/register/init" \
         -H "Content-Type: application/json" \
         -d "$proof")
 
@@ -309,7 +309,7 @@ poll_registration_status() {
         local seconds=$((elapsed % 60))
         printf "\r⏳ Checking status... [${minutes}m ${seconds}s elapsed]"
 
-        local response=$(curl -s -w "\n%{http_code}" "${server}/api/v1/register/${session_token}/status")
+        local response=$(curl -sL -w "\n%{http_code}" "${server}/api/v1/register/${session_token}/status")
         local http_code=$(echo "$response" | tail -n1)
         local body=$(echo "$response" | sed '$d')
 
@@ -401,7 +401,7 @@ cmd_verify_remote() {
 
     # POST to verification API
     info "Sending verification request..."
-    local response=$(curl -s -w "\n%{http_code}" -X POST "${server}/api/v1/verify/signature" \
+    local response=$(curl -sL -w "\n%{http_code}" -X POST "${server}/api/v1/verify/signature" \
         -H "Content-Type: application/json" \
         -d "$proof")
 
@@ -445,7 +445,7 @@ cmd_status() {
     local device_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${DEVICE_IDENTITY_FILE}', 'utf8')).deviceId)")
 
     # Check device status
-    local response=$(curl -s -w "\n%{http_code}" "${server}/api/v1/verify/device/${device_id}")
+    local response=$(curl -sL -w "\n%{http_code}" "${server}/api/v1/verify/device/${device_id}")
     local http_code=$(echo "$response" | tail -n1)
     local body=$(echo "$response" | sed '$d')
 
