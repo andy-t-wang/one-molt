@@ -259,20 +259,7 @@ cmd_register_worldid() {
     warn "IMPORTANT: Complete WorldID verification in your browser to finish!"
     echo
 
-    # Optional: Auto-open browser
-    if command -v open &> /dev/null; then
-        read -p "Open in browser? (y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            open "$reg_url"
-        fi
-    elif command -v xdg-open &> /dev/null; then
-        read -p "Open in browser? (y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            xdg-open "$reg_url"
-        fi
-    fi
+    # User can click the link above to open in browser
 
     # Poll for completion
     echo
