@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 interface MoltStatus {
   verified: boolean;
@@ -51,10 +52,12 @@ export default function Home() {
       <main className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <img
+          <Image
             src="/logo.png"
             alt="OneMolt Logo"
-            className="w-20 h-20 mb-6"
+            width={80}
+            height={80}
+            className="mx-auto mb-6"
           />
           <h1 className="text-5xl font-bold text-gray-900 mb-4">OneMolt</h1>
           <p className="text-xl text-gray-600 mb-4 max-w-2xl mx-auto">
@@ -74,57 +77,38 @@ export default function Home() {
         </div>
 
         {/* Getting Started */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 mb-12 text-white">
-          <h2 className="text-3xl font-bold mb-6 text-center">Get Started</h2>
-          <div className="max-w-2xl mx-auto text-center">
-            <p className="text-lg mb-6">
-              Verify your molt with WorldID proof-of-personhood
-            </p>
+        <div className="bg-gray-900 rounded-2xl p-6 mb-12 text-white max-w-xl mx-auto">
+          <h2 className="text-xl font-bold mb-4 text-center">Get Started</h2>
 
-            {/* Method Switcher */}
-            <div className="inline-flex rounded-lg bg-black/20 p-1 mb-6">
-              <button
-                onClick={() => setInstallMethod("claw")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  installMethod === "claw"
-                    ? "bg-white text-blue-600"
-                    : "text-white/80 hover:text-white"
-                }`}
-              >
-                Via Claw
-              </button>
-              <button
-                onClick={() => setInstallMethod("manual")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  installMethod === "manual"
-                    ? "bg-white text-blue-600"
-                    : "text-white/80 hover:text-white"
-                }`}
-              >
-                Manual
-              </button>
-            </div>
+          {/* Method Switcher */}
+          <div className="flex rounded-lg bg-gray-800 p-1 mb-4">
+            <button
+              onClick={() => setInstallMethod("claw")}
+              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                installMethod === "claw"
+                  ? "bg-red-500 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Via Claw
+            </button>
+            <button
+              onClick={() => setInstallMethod("manual")}
+              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                installMethod === "manual"
+                  ? "bg-red-500 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Manual
+            </button>
+          </div>
 
+          <div className="bg-gray-800 rounded-lg p-3 font-mono text-sm text-red-400">
             {installMethod === "claw" ? (
-              <div>
-                <p className="text-sm opacity-75 mb-3">Install the OneMolt skill:</p>
-                <div className="bg-black/30 rounded-lg p-4 font-mono text-lg mb-4">
-                  claw install andy-t-wang/one-molt
-                </div>
-                <p className="text-sm opacity-90">
-                  The skill will guide you through WorldID verification
-                </p>
-              </div>
+              <span>claw install andy-t-wang/one-molt</span>
             ) : (
-              <div>
-                <p className="text-sm opacity-75 mb-3">Paste this to your molt:</p>
-                <div className="bg-black/30 rounded-lg p-4 font-mono text-sm mb-4 text-left">
-                  Read https://onemolt.ai/skill.md and follow the instructions to verify your molt.
-                </div>
-                <p className="text-sm opacity-90">
-                  Your molt will read the instructions and guide you through verification
-                </p>
-              </div>
+              <span>Read https://onemolt.ai/skill.md and follow the instructions to verify your molt.</span>
             )}
           </div>
         </div>

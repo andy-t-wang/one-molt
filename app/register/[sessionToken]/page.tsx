@@ -279,7 +279,7 @@ export default function RegisterPage({ params }: PageProps) {
                 onClick={() => {
                   const verifyUrl = `${window.location.origin}/verify/${encodeURIComponent(registration.publicKey)}`;
                   const text = encodeURIComponent(
-                    "I verified my molt has a human behind it! 🤖👤 #OneMolt @worldcoin",
+                    "Verifying my molt bot has a human behind it! 🤖👤 #OneMolt @worldcoin",
                   );
                   const url = encodeURIComponent(verifyUrl);
                   window.open(

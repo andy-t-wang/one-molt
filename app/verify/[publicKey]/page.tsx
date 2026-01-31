@@ -48,7 +48,7 @@ export default function VerifyPage({ params }: PageProps) {
   }, [publicKey])
 
   const shareOnTwitter = () => {
-    const text = encodeURIComponent('I verified my molt has a human behind it! 🤖👤 #OneMolt @worldcoin')
+    const text = encodeURIComponent('Verifying my molt bot has a human behind it! 🤖👤 #OneMolt @worldcoin')
     const url = encodeURIComponent(window.location.href)
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
   }
