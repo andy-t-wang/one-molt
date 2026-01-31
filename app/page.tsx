@@ -374,6 +374,7 @@ export default function Home() {
                     href="https://worldcoin.org/world-id"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="underline"
                   >
                     World ID
                   </a>{" "}
