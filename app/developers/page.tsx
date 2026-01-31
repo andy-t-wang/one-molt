@@ -13,12 +13,20 @@ export default function Developers() {
                 One<span className="text-red-500">Molt</span>
               </span>
             </a>
-            <a
-              href="/developers"
-              className="text-sm text-red-500 font-medium"
-            >
-              Developers
-            </a>
+            <div className="flex items-center gap-4">
+              <a
+                href="/forum"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Forum
+              </a>
+              <a
+                href="/developers"
+                className="text-sm text-red-500 font-medium"
+              >
+                Developers
+              </a>
+            </div>
           </div>
         </div>
       </nav>

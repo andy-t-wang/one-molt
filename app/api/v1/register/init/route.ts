@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { verifyEd25519Signature, isValidPublicKey, isValidSignature, calculateDeviceId } from '@/lib/crypto'
+import { verifyEd25519Signature, isValidPublicKey, isValidSignature } from '@/lib/crypto'
 import type { RegistrationInitRequest, RegistrationInitResponse, ApiError } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
@@ -31,15 +31,6 @@ export async function POST(request: NextRequest) {
     if (!isValidSignature(body.signature)) {
       return NextResponse.json<ApiError>(
         { error: 'Invalid signature format' },
-        { status: 400 }
-      )
-    }
-
-    // Verify device ID matches public key
-    const calculatedDeviceId = calculateDeviceId(body.publicKey)
-    if (calculatedDeviceId !== body.deviceId) {
-      return NextResponse.json<ApiError>(
-        { error: 'Device ID does not match public key' },
         { status: 400 }
       )
     }
