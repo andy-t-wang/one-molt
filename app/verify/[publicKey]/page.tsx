@@ -436,7 +436,7 @@ export default function VerifyPage({ params }: PageProps) {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Not Verified</h1>
         <p className="text-gray-600 mb-6">
-          This molt is not registered with WorldID verification
+          This molt is not registered with World ID verification
         </p>
         <Link
           href="/"

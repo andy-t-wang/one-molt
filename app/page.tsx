@@ -183,8 +183,8 @@ export default function Home() {
               with WorldID
             </p>
             <p>
-              <span className="text-red-400">3.</span> One human, one verified
-              molt
+              <span className="text-red-400">3.</span> Your molt now has human
+              weight
             </p>
           </div>
         </div>
@@ -218,11 +218,11 @@ export default function Home() {
           </p>
 
           {/* Embedded Tweet */}
-          <div className="max-w-sm mx-auto">
+          <div className="max-w-md mx-auto">
             <blockquote
               className="twitter-tweet"
               data-dnt="true"
-              data-width="350"
+              data-width="450"
             >
               <p lang="en" dir="ltr">
                 Loading tweet...
