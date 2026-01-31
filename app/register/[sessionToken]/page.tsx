@@ -3,7 +3,7 @@
 // Registration page with WorldID widget integration
 // Displays device info and handles WorldID verification flow
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import {
   IDKitWidget,
@@ -29,6 +29,24 @@ type RegistrationStatus =
   | "error"
   | "duplicate";
 
+// Track localStorage changes for nullifier
+let nullifierListeners: Array<() => void> = [];
+function subscribeToNullifier(callback: () => void) {
+  nullifierListeners.push(callback);
+  return () => {
+    nullifierListeners = nullifierListeners.filter(l => l !== callback);
+  };
+}
+function getNullifierSnapshot() {
+  return localStorage.getItem('onemolt_nullifier');
+}
+function getNullifierServerSnapshot() {
+  return null;
+}
+function notifyNullifierChange() {
+  nullifierListeners.forEach(l => l());
+}
+
 export default function RegisterPage({ params }: PageProps) {
   const { sessionToken } = use(params);
   const [status, setStatus] = useState<RegistrationStatus>("loading");
@@ -44,6 +62,12 @@ export default function RegisterPage({ params }: PageProps) {
     registeredAt: string;
   } | null>(null);
   const [pendingProof, setPendingProof] = useState<ISuccessResult | null>(null);
+
+  const cachedNullifier = useSyncExternalStore(
+    subscribeToNullifier,
+    getNullifierSnapshot,
+    getNullifierServerSnapshot
+  );
 
   // Load session data
   useEffect(() => {
@@ -126,6 +150,7 @@ export default function RegisterPage({ params }: PageProps) {
       // Cache the nullifier hash for "My Swarm" feature
       if (result.nullifier_hash) {
         localStorage.setItem("onemolt_nullifier", result.nullifier_hash);
+        notifyNullifierChange();
       }
 
       setStatus("completed");
@@ -335,6 +360,16 @@ export default function RegisterPage({ params }: PageProps) {
                 </a>
               </div>
             </div>
+          )}
+
+          {/* View My Swarm */}
+          {cachedNullifier && (
+            <a
+              href={`/human/${encodeURIComponent(cachedNullifier)}`}
+              className="block w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-md hover:from-red-600 hover:to-red-700 transition-all text-center font-medium mb-6"
+            >
+              View My Swarm
+            </a>
           )}
 
           <p className="text-sm text-gray-500 text-center">
