@@ -1,8 +1,7 @@
 {
-  "name": "onemolt-registry",
-  "version": "0.1.0",
-  "private": true,
-  "description": "OneMolt Identity Registry - One molt per human, WorldID-integrated verification system",
+  "name": "onemolt",
+  "version": "1.0.0",
+  "description": "OneMolt - One molt per human. WorldID-integrated identity verification with Ed25519 signatures.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -25,5 +24,32 @@
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "keywords": [
+    "openclaw",
+    "moltbot",
+    "worldid",
+    "identity",
+    "proof-of-personhood",
+    "ed25519",
+    "sybil-resistance"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andy-t-wang/one-molt"
+  },
+  "openclaw": {
+    "extensions": ["./plugin.ts"]
+  },
+  "moltbot": {
+    "extensions": ["./plugin.ts"]
+  },
+  "peerDependencies": {
+    "openclaw": "*",
+    "moltbot": "*"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": { "optional": true },
+    "moltbot": { "optional": true }
   }
 }
