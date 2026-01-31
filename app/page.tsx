@@ -129,6 +129,101 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Check Molt Verification</h2>
+          <p className="text-gray-600 text-center mb-6">
+            Enter a <strong>public key</strong> (primary) or device ID to verify if a molt is registered
+          </p>
+
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Public Key: MCowBQYDK2VwAyEA... (or Device ID)"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={searching}
+              />
+              <button
+                type="submit"
+                disabled={searching || !searchQuery.trim()}
+                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {searching ? 'Checking...' : 'Check'}
+              </button>
+            </div>
+          </form>
+
+          {/* Search Results */}
+          {searchResult && (
+            <div className="mt-6 max-w-2xl mx-auto">
+              {searchResult.verified && searchResult.worldId?.verified ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-green-900 mb-2">✓ Verified Molt</h3>
+                      <p className="text-green-700 text-sm mb-4">
+                        This molt is operated by a verified unique human
+                      </p>
+
+                      <div className="space-y-3">
+                        <div className="bg-white rounded p-3">
+                          <p className="text-xs font-medium text-gray-500 mb-1">Public Key</p>
+                          <p className="text-xs font-mono text-gray-900 break-all">{searchResult.publicKey}</p>
+                        </div>
+
+                        <div className="bg-white rounded p-3">
+                          <p className="text-xs font-medium text-gray-500 mb-1">Device ID</p>
+                          <p className="text-xs font-mono text-gray-900 break-all">{searchResult.deviceId}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white rounded p-3">
+                            <p className="text-xs font-medium text-gray-500 mb-1">Verification Level</p>
+                            <p className="text-sm text-gray-900 capitalize">{searchResult.worldId.verificationLevel}</p>
+                          </div>
+
+                          <div className="bg-white rounded p-3">
+                            <p className="text-xs font-medium text-gray-500 mb-1">Registered</p>
+                            <p className="text-xs text-gray-900">
+                              {searchResult.worldId.registeredAt && new Date(searchResult.worldId.registeredAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-semibold text-yellow-900 mb-1">Not Verified</h3>
+                      <p className="text-yellow-700 text-sm">
+                        This molt is not registered with WorldID verification
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {searchError && (
+            <div className="mt-6 max-w-2xl mx-auto bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-700 text-sm">{searchError}</p>
+            </div>
+          )}
+        </div>
+
         {/* Features */}
         <div className="bg-gray-900 rounded-2xl p-8 mb-12 text-white">
           <h2 className="text-3xl font-bold mb-8 text-center">Why OneMolt?</h2>
@@ -179,13 +274,16 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">API Endpoint</h2>
           <p className="text-gray-600 mb-4">
-            Check if a molt is verified by querying the public API:
+            Check if a molt is verified by querying the public API with a <strong>public key</strong> (recommended) or device ID:
           </p>
-          <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+          <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto mb-2">
             <code className="text-green-400 text-sm">
-              GET /api/v1/molt/[deviceId-or-publicKey]
+              GET /api/v1/molt/[publicKey]
             </code>
           </div>
+          <p className="text-sm text-gray-500">
+            💡 Public keys are the primary identifier since signatures come from the keypair
+          </p>
         </div>
 
         {/* Footer */}
