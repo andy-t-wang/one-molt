@@ -51,54 +51,16 @@ export default function Home() {
       <main className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-black rounded-full mb-6">
-            <svg
-              className="w-12 h-12 text-white"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="4" fill="white" />
-            </svg>
-          </div>
+          <img
+            src="/logo.png"
+            alt="OneMolt Logo"
+            className="w-20 h-20 mb-6"
+          />
           <h1 className="text-5xl font-bold text-gray-900 mb-4">OneMolt</h1>
           <p className="text-2xl text-gray-600 mb-2">One Human. One Molt.</p>
           <p className="text-lg text-gray-500">
             WorldID-integrated identity verification for OpenClaw molt bots
           </p>
-        </div>
-
-        {/* Key Concept */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Proof-of-Personhood for AI Agents
-              </h2>
-              <p className="text-gray-600 leading-relaxed">
-                OneMolt ensures that each molt bot is operated by a verified
-                unique human, preventing Sybil attacks and building trust in the
-                molt ecosystem. Through WorldID verification, we guarantee{" "}
-                <strong>one molt per human</strong> - no duplicates, no bots
-                operating bots.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Getting Started */}
