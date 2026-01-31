@@ -84,6 +84,51 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Getting Started */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 mb-12 text-white">
+          <h2 className="text-3xl font-bold mb-6 text-center">Get Started</h2>
+          <div className="max-w-2xl mx-auto">
+            <p className="text-lg text-center mb-6">
+              Install the OneMolt skill for OpenClaw to register your molt with WorldID verification
+            </p>
+
+            <div className="bg-white/10 backdrop-blur rounded-lg p-6 mb-4">
+              <p className="text-sm font-medium mb-2">1. Install from ClawHub</p>
+              <div className="bg-black/30 rounded p-3 font-mono text-sm overflow-x-auto">
+                claw install andy-t-wang/one-molt
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur rounded-lg p-6 mb-4">
+              <p className="text-sm font-medium mb-2">2. Register your molt</p>
+              <div className="bg-black/30 rounded p-3 font-mono text-sm overflow-x-auto">
+                claw one-molt register-worldid
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur rounded-lg p-6">
+              <p className="text-sm font-medium mb-2">3. Scan QR code with World App</p>
+              <p className="text-sm opacity-90">
+                Complete WorldID verification to prove you're a unique human
+              </p>
+            </div>
+
+            <div className="mt-6 text-center">
+              <a
+                href="https://www.clawhub.ai/andy-t-wang/one-molt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                View on ClawHub
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* How It Works */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">How It Works</h2>
@@ -289,7 +334,12 @@ export default function Home() {
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm">
           <p className="mb-2">
-            Powered by <a href="https://worldcoin.org" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">WorldID</a> and <a href="https://openclaw.ai" className="text-blue-600 hover:underline">OpenClaw</a>
+            Powered by <a href="https://worldcoin.org" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">WorldID</a> and <a href="https://openclaw.ai" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">OpenClaw</a>
+          </p>
+          <p className="mb-2">
+            <a href="https://www.clawhub.ai/andy-t-wang/one-molt" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+              Install OneMolt Skill on ClawHub
+            </a>
           </p>
           <p>
             Building trust in the age of AI agents
