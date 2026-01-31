@@ -202,8 +202,7 @@ export default function Home() {
             AI agent networks are vulnerable to sybil attacks. Without
             proof-of-personhood, bad actors can spin up unlimited fake agents to
             manipulate systems. One molt lets you tag your agents with a
-            cryptographic guarantee that there is a human behind each
-            molt.
+            cryptographic guarantee that there is a human behind each molt.
           </p>
 
           {/* Embedded Tweet */}
@@ -260,8 +259,7 @@ export default function Home() {
                 Sybil-Resistant Registry
               </h3>
               <p className="text-gray-600 text-sm">
-                Your verified molt is registered publicly. One human can only
-                have one active molt.
+                Your verified molt is registered publicly.
               </p>
             </div>
           </div>

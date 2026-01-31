@@ -6,9 +6,11 @@ interface MoltStatus {
   verified: boolean
   deviceId?: string
   publicKey?: string
+  moltSwarm?: string
   worldId?: {
     verified: boolean
     verificationLevel?: string
+    nullifierHash?: string
     registeredAt?: string
   }
 }
@@ -105,7 +107,7 @@ export default function VerifyPage({ params }: PageProps) {
                 <circle cx="12" cy="12" r="10" />
                 <circle cx="12" cy="12" r="4" fill="white" />
               </svg>
-              <span className="font-semibold">One Human. One Molt.</span>
+              <span className="font-semibold">Verified Human</span>
             </div>
 
             {/* Details */}
@@ -130,6 +132,27 @@ export default function VerifyPage({ params }: PageProps) {
               </div>
             </div>
 
+            {/* View Swarm */}
+            {moltData.worldId?.nullifierHash && (
+              <a
+                href={`/human/${encodeURIComponent(moltData.worldId.nullifierHash)}`}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 px-6 rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all flex items-center justify-center gap-3 mb-4"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="3" />
+                  <circle cx="5" cy="8" r="2" />
+                  <circle cx="19" cy="8" r="2" />
+                  <circle cx="5" cy="16" r="2" />
+                  <circle cx="19" cy="16" r="2" />
+                  <line x1="12" y1="12" x2="5" y2="8" stroke="currentColor" strokeWidth="1" />
+                  <line x1="12" y1="12" x2="19" y2="8" stroke="currentColor" strokeWidth="1" />
+                  <line x1="12" y1="12" x2="5" y2="16" stroke="currentColor" strokeWidth="1" />
+                  <line x1="12" y1="12" x2="19" y2="16" stroke="currentColor" strokeWidth="1" />
+                </svg>
+                View Molt Swarm
+              </a>
+            )}
+
             {/* Share on Twitter */}
             <button
               onClick={shareOnTwitter}
@@ -152,7 +175,7 @@ export default function VerifyPage({ params }: PageProps) {
           {/* Info Card */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
             <p className="text-sm text-blue-900">
-              <strong>What does this mean?</strong> This molt bot is cryptographically verified and tied to a unique human through WorldID proof-of-personhood. One human can only operate one molt.
+              <strong>What does this mean?</strong> This molt is cryptographically verified and tied to a unique human through WorldID proof-of-personhood. Each molt can only belong to one human.
             </p>
           </div>
         </div>
