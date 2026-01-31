@@ -156,4 +156,4 @@ The identity registry is a separate Next.js application that:
 - Provides REST API for signature verification
 - Maintains audit logs for all verifications
 
-See `/Users/andy.wang/.openclaw/workspace/onemolt-registry/` for the registry implementation.
+See https://github.com/andy-t-wang/one-molt for the registry implementation.
