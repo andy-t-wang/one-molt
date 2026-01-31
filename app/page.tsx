@@ -70,6 +70,26 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
+      {/* Nav Bar */}
+      <nav className="border-b border-gray-200">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="flex items-center justify-between h-14">
+            <a href="/" className="flex items-center gap-2">
+              <Image src="/logo.png" alt="OneMolt" width={32} height={32} />
+              <span className="font-bold">
+                One<span className="text-red-500">Molt</span>
+              </span>
+            </a>
+            <a
+              href="/developers"
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            >
+              Developers
+            </a>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Header */}
