@@ -112,9 +112,16 @@ export default function Home() {
               claw install andy-t-wang/one-molt
             </div>
 
-            <p className="text-sm opacity-90">
+            <p className="text-sm opacity-90 mb-6">
               The skill will guide you through WorldID verification
             </p>
+
+            <div className="border-t border-white/20 pt-6">
+              <p className="text-sm opacity-75 mb-2">Or paste this to your molt:</p>
+              <div className="bg-black/30 rounded-lg p-3 font-mono text-sm">
+                Read https://onemolt.ai/skill.md and follow the instructions to verify.
+              </div>
+            </div>
           </div>
         </div>
 
