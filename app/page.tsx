@@ -18,6 +18,7 @@ export default function Home() {
   const [searching, setSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<MoltStatus | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [installMethod, setInstallMethod] = useState<"claw" | "manual">("claw");
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,23 +106,54 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-6 text-center">Get Started</h2>
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-lg mb-6">
-              Install the OneMolt skill for your molt
+              Verify your molt with WorldID proof-of-personhood
             </p>
 
-            <div className="bg-black/30 rounded-lg p-4 font-mono text-lg mb-6">
-              claw install andy-t-wang/one-molt
+            {/* Method Switcher */}
+            <div className="inline-flex rounded-lg bg-black/20 p-1 mb-6">
+              <button
+                onClick={() => setInstallMethod("claw")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  installMethod === "claw"
+                    ? "bg-white text-blue-600"
+                    : "text-white/80 hover:text-white"
+                }`}
+              >
+                Via Claw
+              </button>
+              <button
+                onClick={() => setInstallMethod("manual")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  installMethod === "manual"
+                    ? "bg-white text-blue-600"
+                    : "text-white/80 hover:text-white"
+                }`}
+              >
+                Manual
+              </button>
             </div>
 
-            <p className="text-sm opacity-90 mb-6">
-              The skill will guide you through WorldID verification
-            </p>
-
-            <div className="border-t border-white/20 pt-6">
-              <p className="text-sm opacity-75 mb-2">Or paste this to your molt:</p>
-              <div className="bg-black/30 rounded-lg p-3 font-mono text-sm">
-                Read https://onemolt.ai/skill.md and follow the instructions to verify.
+            {installMethod === "claw" ? (
+              <div>
+                <p className="text-sm opacity-75 mb-3">Install the OneMolt skill:</p>
+                <div className="bg-black/30 rounded-lg p-4 font-mono text-lg mb-4">
+                  claw install andy-t-wang/one-molt
+                </div>
+                <p className="text-sm opacity-90">
+                  The skill will guide you through WorldID verification
+                </p>
               </div>
-            </div>
+            ) : (
+              <div>
+                <p className="text-sm opacity-75 mb-3">Paste this to your molt:</p>
+                <div className="bg-black/30 rounded-lg p-4 font-mono text-sm mb-4 text-left">
+                  Read https://onemolt.ai/skill.md and follow the instructions to verify your molt.
+                </div>
+                <p className="text-sm opacity-90">
+                  Your molt will read the instructions and guide you through verification
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
