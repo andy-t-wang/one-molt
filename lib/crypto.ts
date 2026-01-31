@@ -91,10 +91,21 @@ export function isValidSignature(signatureBase64: string): boolean {
 /**
  * Calculates SHA256 hash of a public key (for device ID)
  *
- * @param publicKeyBase64 - The public key in base64 format
- * @returns SHA256 hash as hex string
+ * OpenClaw computes deviceId from the raw 32-byte Ed25519 public key,
+ * not the full SPKI wrapper. The SPKI DER format has a 12-byte header
+ * for Ed25519 keys, so we strip that before hashing.
+ *
+ * @param publicKeyBase64 - The public key in base64 SPKI DER format
+ * @returns SHA256 hash as hex string (matching OpenClaw's deviceId)
  */
 export function calculateDeviceId(publicKeyBase64: string): string {
   const publicKeyDer = Buffer.from(publicKeyBase64, 'base64')
-  return crypto.createHash('sha256').update(publicKeyDer).digest('hex')
+
+  // SPKI DER for Ed25519 is 44 bytes: 12-byte header + 32-byte raw key
+  // Extract the raw 32-byte Ed25519 public key
+  const rawPublicKey = publicKeyDer.length === 44
+    ? publicKeyDer.slice(12)  // Skip SPKI header
+    : publicKeyDer            // Already raw key
+
+  return crypto.createHash('sha256').update(rawPublicKey).digest('hex')
 }
