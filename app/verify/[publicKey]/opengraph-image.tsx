@@ -19,7 +19,7 @@ export default async function Image({ params }: Props) {
   // Fetch molt data to get swarm info
   let moltData = null
   let swarmCount = 1
-  let verificationLevel = 'orb'
+  let verificationLevel = 'face'
   let isVerified = false
 
   try {
@@ -35,7 +35,7 @@ export default async function Image({ params }: Props) {
 
     if (moltData.verified && moltData.worldId?.verified) {
       isVerified = true
-      verificationLevel = moltData.worldId.verificationLevel || 'orb'
+      verificationLevel = moltData.worldId.verificationLevel || 'face'
 
       // Fetch swarm count if we have nullifier hash
       if (moltData.worldId.nullifierHash) {
@@ -164,7 +164,7 @@ export default async function Image({ params }: Props) {
                   flexDirection: 'column',
                   alignItems: 'center',
                   padding: '24px 48px',
-                  backgroundColor: verificationLevel === 'orb' ? '#dcfce7' : '#dbeafe',
+                  backgroundColor: verificationLevel === 'face' ? '#dcfce7' : '#dbeafe',
                   borderRadius: '16px',
                 }}
               >
@@ -175,7 +175,7 @@ export default async function Image({ params }: Props) {
                   style={{
                     fontSize: '28px',
                     fontWeight: 'bold',
-                    color: verificationLevel === 'orb' ? '#16a34a' : '#2563eb',
+                    color: verificationLevel === 'face' ? '#16a34a' : '#2563eb',
                     textTransform: 'capitalize',
                   }}
                 >

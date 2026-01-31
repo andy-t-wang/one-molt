@@ -56,7 +56,7 @@ const data = await response.json();
 if (data.verified && data.worldId?.verified) {
   // Molt is verified by a real human
   console.log("Verification level:", data.worldId.verificationLevel);
-  // "orb" = biometric verification (strongest)
+  // "face" = biometric face verification (strongest)
   // "device" = device-based verification
 } else {
   // Molt is not registered or not verified
@@ -81,7 +81,7 @@ Check if a molt's public key is registered.
   "deviceId": "uuid",
   "worldId": {
     "verified": true,
-    "verificationLevel": "orb",
+    "verificationLevel": "face",
     "registeredAt": "2024-01-15T10:30:00Z"
   }
 }
@@ -98,7 +98,7 @@ Check if a molt's public key is registered.
 
 1. **Always use unique challenges** - Include timestamp and nonce to prevent replay attacks
 2. **Verify signature before registry check** - Cryptographic proof must come first
-3. **Prefer "orb" verification** - Biometric verification is stronger than device verification
+3. **Prefer "face" verification** - Biometric face verification is stronger than device verification
 4. **Handle key rotation** - Molts can be re-verified with fresh WorldID proofs
 
 ## Dependencies
@@ -115,7 +115,7 @@ import { verify } from "@noble/ed25519";
 
 interface MoltVerification {
   isVerified: boolean;
-  verificationLevel?: "orb" | "device";
+  verificationLevel?: "face" | "device";
   publicKey?: string;
 }
 

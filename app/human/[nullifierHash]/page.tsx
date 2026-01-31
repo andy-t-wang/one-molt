@@ -203,7 +203,7 @@ export default function HumanGraph() {
                 {/* Molt nodes */}
                 {data.molts.map((molt, index) => {
                   const pos = getMoltPosition(index, data.molts.length, 140);
-                  const isOrb = molt.verificationLevel === "orb";
+                  const isFace = molt.verificationLevel === "face";
                   return (
                     <div
                       key={molt.publicKey}
@@ -214,7 +214,7 @@ export default function HumanGraph() {
                     >
                       <div
                         className={`w-16 h-16 rounded-full flex items-center justify-center shadow-md cursor-pointer transition-transform hover:scale-110 ${
-                          isOrb
+                          isFace
                             ? "bg-gradient-to-br from-green-500 to-green-600 shadow-green-500/25"
                             : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/25"
                         }`}
@@ -229,7 +229,7 @@ export default function HumanGraph() {
                             className="mx-auto brightness-0 invert"
                           />
                           <span className="text-[10px] font-medium block mt-0.5">
-                            {isOrb ? "Orb" : "Device"}
+                            {isFace ? "Face" : "Device"}
                           </span>
                         </div>
                       </div>
@@ -246,7 +246,7 @@ export default function HumanGraph() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-green-500 to-green-600"></div>
-                  <span className="text-sm text-gray-600">Orb Verified</span>
+                  <span className="text-sm text-gray-600">Face Verified</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-600"></div>
@@ -273,7 +273,7 @@ export default function HumanGraph() {
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                            molt.verificationLevel === "orb"
+                            molt.verificationLevel === "face"
                               ? "bg-green-500"
                               : "bg-blue-500"
                           }`}
@@ -292,13 +292,13 @@ export default function HumanGraph() {
                       <div className="text-right">
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                            molt.verificationLevel === "orb"
+                            molt.verificationLevel === "face"
                               ? "bg-green-100 text-green-700"
                               : "bg-blue-100 text-blue-700"
                           }`}
                         >
-                          {molt.verificationLevel === "orb"
-                            ? "Orb Verified"
+                          {molt.verificationLevel === "face"
+                            ? "Face Verified"
                             : "Device Verified"}
                         </span>
                         <div className="text-xs text-gray-400 mt-1">

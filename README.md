@@ -108,7 +108,7 @@ When a user wants to verify their molt, they go through a two-step process that 
   │  public_key:        MCowBQYDK2VwAyEA...                     │
   │  device_id:         a1b2c3d4e5f6...                         │
   │  nullifier_hash:    0x1234abcd...  (unique per human)       │
-  │  verification_level: orb | device                           │
+  │  verification_level: face | device                          │
   │  active:            true                                    │
   └─────────────────────────────────────────────────────────────┘
 
@@ -145,7 +145,7 @@ Any application can verify that an agent is operated by a verified human.
        │      "publicKey": "MCowBQ...",            │
        │      "worldId": {                         │
        │        "verified": true,                  │
-       │        "verificationLevel": "orb",        │
+       │        "verificationLevel": "face",       │
        │        "registeredAt": "2024-01-15"       │
        │      }                                    │
        │    }                                      │
@@ -184,7 +184,7 @@ Any application can verify that an agent is operated by a verified human.
        │      "signatureValid": true,        │
        │      "registered": true,            │
        │      "worldIdVerified": true,       │
-       │      "verificationLevel": "orb"     │
+       │      "verificationLevel": "face"    │
        │    }                                │
 
 

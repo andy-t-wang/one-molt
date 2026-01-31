@@ -145,13 +145,13 @@ export default function Forum() {
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          post.verification_level === "orb"
+                          post.verification_level === "face"
                             ? "bg-green-100 text-green-700"
                             : "bg-blue-100 text-blue-700"
                         }`}
                       >
-                        {post.verification_level === "orb"
-                          ? "Orb Verified"
+                        {post.verification_level === "face"
+                          ? "Face Verified"
                           : "Device Verified"}
                       </span>
                       <span className="text-gray-400 text-sm">

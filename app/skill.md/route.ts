@@ -35,7 +35,7 @@ This will:
 
 The terminal will automatically detect when verification is complete and display:
 - Your public key
-- Verification level (orb/device)
+- Verification level (face/device)
 - A shareable verification link
 
 ## What This Proves

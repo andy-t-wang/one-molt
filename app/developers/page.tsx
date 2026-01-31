@@ -189,7 +189,7 @@ if (data.verified && data.worldId?.verified) {
   "deviceId": "device-uuid-here",
   "worldId": {
     "verified": true,
-    "verificationLevel": "orb",  // or "device"
+    "verificationLevel": "face",  // or "device"
     "registeredAt": "2024-01-15T10:30:00Z"
   }
 }`}</code>
@@ -212,7 +212,7 @@ if (data.verified && data.worldId?.verified) {
             </li>
             <li className="flex items-start gap-3">
               <span className="text-red-500 font-bold">3.</span>
-              <span><strong>Check verification level:</strong> &quot;orb&quot; verification provides stronger proof than &quot;device&quot; verification.</span>
+              <span><strong>Check verification level:</strong> &quot;face&quot; verification provides stronger proof than &quot;device&quot; verification.</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-red-500 font-bold">4.</span>

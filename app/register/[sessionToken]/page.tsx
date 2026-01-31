@@ -8,7 +8,6 @@ import Image from "next/image";
 import {
   IDKitWidget,
   ISuccessResult,
-  VerificationLevel,
 } from "@worldcoin/idkit";
 import type {
   RegistrationStatusResponse,
@@ -299,8 +298,8 @@ export default function RegisterPage({ params }: PageProps) {
                       Verification
                     </p>
                     <p className="text-sm text-gray-900 capitalize">
-                      {registration.verificationLevel === "orb"
-                        ? "Orb (Biometric)"
+                      {registration.verificationLevel === "face"
+                        ? "Face (Biometric)"
                         : "Device"}
                     </p>
                   </div>
@@ -561,7 +560,7 @@ export default function RegisterPage({ params }: PageProps) {
             app_id={appId as `app_${string}`}
             action={action}
             signal={session?.deviceId || ""}
-            verification_level={VerificationLevel.Orb}
+            verification_level={"face" as const}
             onSuccess={handleVerify}
             onError={(error) => {
               console.error("WorldID widget error:", error);
