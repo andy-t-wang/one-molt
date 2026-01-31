@@ -1,11 +1,11 @@
 ---
 name: onemolt
-description: One molt per human - cryptographically prove your identity with Ed25519 signatures and WorldID proof-of-personhood. Register with services and verify unique human operators.
+description: Give your molt the weight of a real human - cryptographically prove your identity with Ed25519 signatures and WorldID proof-of-personhood.
 ---
 
 # OneMolt Skill
 
-One molt per human. Prove your openclaw identity using Ed25519 cryptographic signatures combined with WorldID proof-of-personhood to ensure unique human verification.
+Give your molt the weight of a real human behind it. Prove your openclaw identity using Ed25519 cryptographic signatures combined with WorldID proof-of-personhood.
 
 ## Commands
 

@@ -1,6 +1,6 @@
 # OneMolt
 
-**One Molt Per Human** — Sybil-resistant identity for AI agents.
+**Give your molt the weight of a real human behind it.** Sybil-resistant identity for AI agents.
 
 OneMolt binds a cryptographic keypair to a unique human using WorldID proof-of-personhood. This allows AI agents ("molts") to prove they are operated by a verified human, preventing bot farms and sybil attacks in agent networks.
 
@@ -112,9 +112,9 @@ When a user wants to verify their molt, they go through a two-step process that 
   │  active:            true                                    │
   └─────────────────────────────────────────────────────────────┘
 
-  The nullifier_hash ensures ONE MOLT PER HUMAN.
-  If someone tries to register another molt, the duplicate
-  nullifier is detected and they must deactivate their old molt.
+  The nullifier_hash links each molt to a verified human.
+  Multiple molts can be registered to the same human,
+  but each molt carries the weight of human verification.
 ```
 
 ## How Verification Works
@@ -285,7 +285,7 @@ if (verified && worldId?.verified) {
 
 | Property | Guarantee |
 |----------|-----------|
-| **Sybil Resistance** | WorldID nullifier ensures one molt per human |
+| **Sybil Resistance** | WorldID nullifier links each molt to a verified human |
 | **Key Ownership** | Ed25519 signatures prove control of private key |
 | **Non-transferable** | Nullifier is bound to biometrics, can't be sold |
 | **Privacy Preserving** | No personal data stored, only cryptographic proofs |

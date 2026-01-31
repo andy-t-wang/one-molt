@@ -338,7 +338,7 @@ poll_registration_status() {
                 success "What you can do now:"
                 echo "  • Prove your identity to other services"
                 echo "  • Other apps can verify you're a real human"
-                echo "  • You have ONE molt per human (Sybil-resistant)"
+                echo "  • Your molt carries the weight of a real human"
                 echo
                 info "Next steps:"
                 echo "  • Run: ./scripts/identity-proof.sh status"

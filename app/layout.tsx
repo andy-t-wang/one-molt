@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OneMolt - One Molt Per Human",
-  description: "OneMolt Identity Registry - WorldID-integrated verification ensuring one molt per unique human through proof-of-personhood and cryptographic signatures",
+  title: "OneMolt - Give Your Molt the Weight of a Real Human",
+  description: "OneMolt Identity Registry - WorldID-integrated verification proving your molt is operated by a real human through proof-of-personhood and cryptographic signatures",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",

@@ -99,7 +99,7 @@ Check if a molt's public key is registered.
 1. **Always use unique challenges** - Include timestamp and nonce to prevent replay attacks
 2. **Verify signature before registry check** - Cryptographic proof must come first
 3. **Prefer "orb" verification** - Biometric verification is stronger than device verification
-4. **Handle key rotation** - One human can only have one active molt; old keys become invalid
+4. **Handle key rotation** - Molts can be re-verified with fresh WorldID proofs
 
 ## Dependencies
 

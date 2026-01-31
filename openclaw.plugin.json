@@ -1,7 +1,7 @@
 {
   "id": "onemolt",
   "name": "OneMolt",
-  "description": "One molt per human - cryptographically prove your identity with Ed25519 signatures and WorldID proof-of-personhood",
+  "description": "Give your molt the weight of a real human - cryptographically prove your identity with Ed25519 signatures and WorldID proof-of-personhood",
   "version": "1.0.0",
   "skills": ["./skill"],
   "configSchema": {

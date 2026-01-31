@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { use, useEffect, useState } from "react";
 
 const LobsterIcon = ({ className = "w-8 h-8" }: { className?: string }) => (
@@ -387,12 +388,12 @@ export default function VerifyPage({ params }: PageProps) {
                 </svg>
                 Share
               </button>
-              <a
+              <Link
                 href="/"
                 className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 ← Back
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -437,12 +438,12 @@ export default function VerifyPage({ params }: PageProps) {
         <p className="text-gray-600 mb-6">
           This molt is not registered with WorldID verification
         </p>
-        <a
+        <Link
           href="/"
           className="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
           Learn About OneMolt
-        </a>
+        </Link>
       </div>
     </div>
   );

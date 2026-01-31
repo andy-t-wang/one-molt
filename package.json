@@ -1,7 +1,7 @@
 {
   "name": "onemolt",
   "version": "1.0.0",
-  "description": "OneMolt - One molt per human. WorldID-integrated identity verification with Ed25519 signatures.",
+  "description": "OneMolt - Give your molt the weight of a real human behind it. WorldID-integrated identity verification with Ed25519 signatures.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

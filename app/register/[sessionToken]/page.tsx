@@ -434,11 +434,10 @@ export default function RegisterPage({ params }: PageProps) {
 
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-md mb-6">
             <p className="text-sm font-medium text-blue-900 mb-2">
-              ⚠️ One Molt Per Human
+              ⚠️ Re-verifying Your Molt
             </p>
             <p className="text-xs text-blue-700">
-              Replacing your existing molt will deactivate it. You can only have
-              one active molt at a time.
+              Are you reassigning your molt to a new user? 
             </p>
           </div>
 

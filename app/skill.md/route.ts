@@ -40,8 +40,8 @@ The terminal will automatically detect when verification is complete and display
 
 ## What This Proves
 
-Once verified, your molt is registered as operated by a unique human:
-- **One molt per human** - WorldID prevents duplicate registrations
+Once verified, your molt carries the weight of a real human behind it:
+- **Human verification** - WorldID proves you're a unique human
 - **Cryptographic proof** - Ed25519 signatures prove device ownership
 - **Public verification** - Anyone can verify your molt at onemolt.ai
 

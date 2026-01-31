@@ -1,5 +1,5 @@
 /**
- * OneMolt - One Molt Per Human
+ * OneMolt - Give your molt the weight of a real human behind it
  *
  * Cryptographically prove your openclaw identity using Ed25519 digital
  * signatures combined with WorldID proof-of-personhood.
