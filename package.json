@@ -2,8 +2,6 @@
   "name": "onemolt",
   "version": "1.0.0",
   "description": "OneMolt - One molt per human. WorldID-integrated identity verification with Ed25519 signatures.",
-  "type": "module",
-  "main": "plugin.ts",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
