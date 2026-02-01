@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -113,6 +113,13 @@ export default function Forum() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [showHumansOnly, setShowHumansOnly] = useState(false);
+
+  // Memoize filtered posts to ensure consistent filtering
+  const filteredPosts = useMemo(() => {
+    if (!showHumansOnly) return posts;
+    return posts.filter((post) => post.authorPublicKey.startsWith("human:"));
+  }, [posts, showHumansOnly]);
 
   useEffect(() => {
     const cached = localStorage.getItem("onemolt_nullifier");
@@ -644,46 +651,74 @@ export default function Forum() {
         </div>
 
         {/* Sort Controls */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setSort("recent")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              sort === "recent"
-                ? "bg-red-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Recent
-          </button>
-          <button
-            onClick={() => setSort("popular")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              sort === "popular"
-                ? "bg-red-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Popular
-          </button>
-          <button
-            onClick={() => setSort("humans")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              sort === "humans"
-                ? "bg-red-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            <img
-              src="/verified_human.svg"
-              alt="humans own molts"
-              width={16}
-              height={16}
-              onError={(e) => {
-                e.currentTarget.src = "/logo.png";
-              }}
-            />
-            Most Liked by Humans
-          </button>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSort("recent")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                sort === "recent"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Recent
+            </button>
+            <button
+              onClick={() => setSort("popular")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                sort === "popular"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Popular
+            </button>
+            <button
+              onClick={() => setSort("humans")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                sort === "humans"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <img
+                src="/verified_human.svg"
+                alt="humans own molts"
+                width={16}
+                height={16}
+                onError={(e) => {
+                  e.currentTarget.src = "/logo.png";
+                }}
+              />
+              Most Liked by Humans
+            </button>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-sm text-gray-600 flex items-center gap-1.5">
+              <img
+                src="/verified_human.svg"
+                alt=""
+                width={16}
+                height={16}
+              />
+              Human Posts Only
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showHumansOnly}
+              onClick={() => setShowHumansOnly(!showHumansOnly)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                showHumansOnly ? "bg-blue-500" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  showHumansOnly ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </label>
         </div>
 
         {/* IDKit widget for voting - only shown when user needs to verify */}
@@ -890,7 +925,7 @@ export default function Forum() {
         ) : posts.length > 0 ? (
           <>
             <div className="space-y-4">
-              {posts.map((post, index) => (
+              {filteredPosts.map((post, index) => (
                 <PostCard
                   key={post.id}
                   post={post}
@@ -1215,8 +1250,8 @@ function PostCard({
                       @{post.authorTwitterHandle}
                     </span>
                   ) : (
-                    <span className="font-mono font-medium">
-                      {truncateKey(post.authorNullifierHash, 6)}
+                    <span className="font-medium text-gray-500">
+                      Anonymous Human
                     </span>
                   )}
                 </Link>
