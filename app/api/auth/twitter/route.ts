@@ -70,8 +70,9 @@ export async function GET(request: NextRequest) {
         onConflict: 'nullifier_hash'
       })
 
-    // Build Twitter OAuth URL
-    const baseUrl = request.headers.get('host') || 'onemolt.ai'
+    // Build Twitter OAuth URL - always use non-www for consistency
+    let baseUrl = request.headers.get('host') || 'onemolt.ai'
+    baseUrl = baseUrl.replace(/^www\./, '') // Strip www. prefix
     const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
     const redirectUri = `${protocol}://${baseUrl}/api/auth/twitter/callback`
 
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     authUrl.searchParams.set('response_type', 'code')
     authUrl.searchParams.set('client_id', clientId)
     authUrl.searchParams.set('redirect_uri', redirectUri)
-    authUrl.searchParams.set('scope', 'tweet.read users.read')
+    authUrl.searchParams.set('scope', 'users.read offline.access')
     authUrl.searchParams.set('state', state)
     authUrl.searchParams.set('code_challenge', challenge)
     authUrl.searchParams.set('code_challenge_method', 'S256')

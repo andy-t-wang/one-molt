@@ -46,8 +46,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=expired', request.url))
     }
 
-    // Exchange code for token
-    const baseUrl = request.headers.get('host') || 'onemolt.ai'
+    // Exchange code for token - always use non-www for consistency
+    let baseUrl = request.headers.get('host') || 'onemolt.ai'
+    baseUrl = baseUrl.replace(/^www\./, '') // Strip www. prefix
     const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
     const redirectUri = `${protocol}://${baseUrl}/api/auth/twitter/callback`
 
