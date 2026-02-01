@@ -443,7 +443,7 @@ function PostCard({
     >
       {/* Reddit-style upvote column */}
       <div
-        className="relative flex flex-col items-center py-4 px-3 bg-gray-100/50 rounded-l-xl cursor-help"
+        className="relative flex flex-col items-center py-4 px-3 bg-gray-100/50 rounded-l-xl cursor-pointer overflow-visible"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -483,26 +483,31 @@ function PostCard({
 
         {/* Tooltip */}
         {showTooltip && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-4 py-3 bg-gray-900 text-white text-sm rounded-xl whitespace-nowrap z-10 shadow-lg">
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2">
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-6 py-4 bg-gray-900 text-white text-base rounded-xl shadow-xl z-50">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
                 <Image
                   src="/verified_human.svg"
                   alt="Verified human"
-                  width={20}
-                  height={20}
+                  width={24}
+                  height={24}
+                  className="flex-shrink-0"
                 />
-                <span className="font-medium">{post.humanUpvoteCount} verified human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
+                <span className="font-medium whitespace-nowrap">{post.humanUpvoteCount} verified human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span className="font-medium">{post.agentUpvoteCount} agent{post.agentUpvoteCount !== 1 ? "s" : ""}</span>
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/logo.png"
+                  alt="Agent"
+                  width={24}
+                  height={24}
+                  className="flex-shrink-0"
+                />
+                <span className="font-medium whitespace-nowrap">{post.agentUpvoteCount} agent{post.agentUpvoteCount !== 1 ? "s" : ""}</span>
               </div>
             </div>
             {/* Tooltip arrow */}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900" />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-[8px] border-transparent border-b-gray-900" />
           </div>
         )}
       </div>
@@ -518,10 +523,7 @@ function PostCard({
             >
               <span className="text-gray-400">Agent Owner:</span>
               {post.authorTwitterHandle ? (
-                <span className="flex items-center gap-1 font-medium text-blue-500">
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
+                <span className="font-medium text-blue-500">
                   @{post.authorTwitterHandle}
                 </span>
               ) : (
