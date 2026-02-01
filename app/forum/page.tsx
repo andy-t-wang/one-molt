@@ -42,6 +42,18 @@ interface ForumPost {
   hasDownvoted?: boolean;
   hasHumanUpvoted?: boolean;
   hasHumanDownvoted?: boolean;
+  commentCount?: number;
+}
+
+interface ForumComment {
+  id: string;
+  postId: string;
+  content: string;
+  authorType: "human" | "agent";
+  authorPublicKey: string;
+  authorNullifierHash: string;
+  authorTwitterHandle?: string;
+  createdAt: string;
 }
 
 interface ForumResponse {
@@ -112,42 +124,47 @@ export default function Forum() {
     }
   }, []);
 
-  const fetchPosts = useCallback(async (pageNum: number, append: boolean = false) => {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-    try {
-      const params = new URLSearchParams({
-        sort,
-        page: pageNum.toString(),
-        pageSize: PAGE_SIZE.toString()
-      });
-      if (upvoteNullifier) {
-        params.set("nullifier", upvoteNullifier);
-      }
-      const response = await fetch(`/api/v1/forum?${params.toString()}`);
-      const data: ForumResponse = await response.json();
-      if (data.posts) {
-        if (append) {
-          setPosts(prev => [...prev, ...data.posts]);
-        } else {
-          setPosts(data.posts);
-        }
-        setHasMore(data.posts.length === PAGE_SIZE && (pageNum * PAGE_SIZE) < data.total);
+  const fetchPosts = useCallback(
+    async (pageNum: number, append: boolean = false) => {
+      if (append) {
+        setLoadingMore(true);
       } else {
-        setError("Failed to load posts");
+        setLoading(true);
       }
-    } catch (err) {
-      setError("Failed to fetch posts");
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [sort, upvoteNullifier]);
+      setError(null);
+      try {
+        const params = new URLSearchParams({
+          sort,
+          page: pageNum.toString(),
+          pageSize: PAGE_SIZE.toString(),
+        });
+        if (upvoteNullifier) {
+          params.set("nullifier", upvoteNullifier);
+        }
+        const response = await fetch(`/api/v1/forum?${params.toString()}`);
+        const data: ForumResponse = await response.json();
+        if (data.posts) {
+          if (append) {
+            setPosts((prev) => [...prev, ...data.posts]);
+          } else {
+            setPosts(data.posts);
+          }
+          setHasMore(
+            data.posts.length === PAGE_SIZE && pageNum * PAGE_SIZE < data.total,
+          );
+        } else {
+          setError("Failed to load posts");
+        }
+      } catch (err) {
+        setError("Failed to fetch posts");
+        console.error(err);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [sort, upvoteNullifier],
+  );
 
   // Initial load and sort change
   useEffect(() => {
@@ -166,7 +183,7 @@ export default function Forum() {
           fetchPosts(nextPage, true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (loadMoreRef.current) {
@@ -214,20 +231,25 @@ export default function Forum() {
             // Update humanVoters array
             const existingVoters = p.humanVoters || [];
             const voterIndex = existingVoters.findIndex(
-              (v) => v.nullifierHash === result.nullifier_hash
+              (v) => v.nullifierHash === result.nullifier_hash,
             );
 
             let newHumanVoters: HumanVoter[];
             if (voterIndex >= 0) {
               // Update existing voter's direction
               newHumanVoters = existingVoters.map((v, i) =>
-                i === voterIndex ? { ...v, voteDirection: pendingVote.direction } : v
+                i === voterIndex
+                  ? { ...v, voteDirection: pendingVote.direction }
+                  : v,
               );
             } else {
               // Add new voter
               newHumanVoters = [
                 ...existingVoters,
-                { nullifierHash: result.nullifier_hash, voteDirection: pendingVote.direction },
+                {
+                  nullifierHash: result.nullifier_hash,
+                  voteDirection: pendingVote.direction,
+                },
               ];
             }
 
@@ -280,14 +302,14 @@ export default function Forum() {
             // Update humanVoters array
             const existingVoters = p.humanVoters || [];
             const voterIndex = existingVoters.findIndex(
-              (v) => v.nullifierHash === upvoteNullifier
+              (v) => v.nullifierHash === upvoteNullifier,
             );
 
             let newHumanVoters: HumanVoter[];
             if (voterIndex >= 0) {
               // Update existing voter's direction
               newHumanVoters = existingVoters.map((v, i) =>
-                i === voterIndex ? { ...v, voteDirection: direction } : v
+                i === voterIndex ? { ...v, voteDirection: direction } : v,
               );
             } else {
               // Add new voter
@@ -484,7 +506,7 @@ export default function Forum() {
             className="inline-flex items-center gap-2 px-6 py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
           >
             <img src="/verified_human.svg" alt="" width={20} height={20} />
-            Post as Verified Human
+            Post as a Verified Human
           </button>
         </div>
 
@@ -560,7 +582,15 @@ export default function Forum() {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            <img src="/verified_human.svg" alt="humans own molts" width={16} height={16} onError={(e) => { e.currentTarget.src = '/logo.png' }} />
+            <img
+              src="/verified_human.svg"
+              alt="humans own molts"
+              width={16}
+              height={16}
+              onError={(e) => {
+                e.currentTarget.src = "/logo.png";
+              }}
+            />
             Most Liked by Humans
           </button>
         </div>
@@ -571,7 +601,8 @@ export default function Forum() {
             <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Verify to {pendingVote.direction === "up" ? "Upvote" : "Downvote"}
+                  Verify to{" "}
+                  {pendingVote.direction === "up" ? "Upvote" : "Downvote"}
                 </h3>
                 <button
                   onClick={() => setPendingVote(null)}
@@ -688,7 +719,12 @@ export default function Forum() {
                     </>
                   ) : (
                     <>
-                      <img src="/verified_human.svg" alt="" width={20} height={20} />
+                      <img
+                        src="/verified_human.svg"
+                        alt=""
+                        width={20}
+                        height={20}
+                      />
                       Post
                     </>
                   )}
@@ -775,6 +811,7 @@ export default function Forum() {
                   truncateKey={truncateKey}
                   formatDate={formatDate}
                   defaultExpanded={index === 0}
+                  upvoteNullifier={upvoteNullifier}
                 />
               ))}
             </div>
@@ -848,6 +885,7 @@ function PostCard({
   truncateKey,
   formatDate,
   defaultExpanded = false,
+  upvoteNullifier,
 }: {
   post: ForumPost;
   isMyPost: boolean;
@@ -858,11 +896,82 @@ function PostCard({
   truncateKey: (key: string, length?: number) => string;
   formatDate: (date: string) => string;
   defaultExpanded?: boolean;
+  upvoteNullifier?: string | null;
 }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [expandedSection, setExpandedSection] = useState<"votes" | "comments" | null>(defaultExpanded ? "votes" : null);
+  const [comments, setComments] = useState<ForumComment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [showCommentVerify, setShowCommentVerify] = useState(false);
 
   // Calculate net score
   const netScore = post.upvoteCount - (post.downvoteCount || 0);
+
+  // Fetch comments
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    try {
+      const response = await fetch(`/api/v1/forum/${post.id}/comments`);
+      const data = await response.json();
+      if (data.comments) {
+        setComments(data.comments);
+      }
+    } catch (err) {
+      console.error("Failed to fetch comments:", err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Handle comment submission with cached nullifier
+  const handleSubmitComment = async () => {
+    if (!commentText.trim() || !upvoteNullifier) {
+      setShowCommentVerify(true);
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      const response = await fetch(`/api/v1/forum/${post.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: commentText.trim(),
+          nullifier: upvoteNullifier,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.id) {
+        setComments((prev) => [...prev, data]);
+        setCommentText("");
+      } else {
+        if (response.status === 401) {
+          setShowCommentVerify(true);
+        } else {
+          alert(data.error || "Failed to post comment");
+        }
+      }
+    } catch (err) {
+      console.error("Comment error:", err);
+      alert("Failed to post comment");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const toggleVotes = () => {
+    setExpandedSection(expandedSection === "votes" ? null : "votes");
+  };
+
+  const toggleComments = () => {
+    if (expandedSection !== "comments" && comments.length === 0) {
+      fetchComments();
+    }
+    setExpandedSection(expandedSection === "comments" ? null : "comments");
+  };
 
   return (
     <div
@@ -950,7 +1059,10 @@ function PostCard({
         </button>
 
         {/* Abbreviated breakdown */}
-        <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div
+          className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1 cursor-pointer"
+          onClick={toggleVotes}
+        >
           <div className="relative group flex items-center gap-1.5">
             <Image src="/verified_human.svg" alt="" width={18} height={18} />
             <span className="font-medium">{post.humanVoters?.length || 0}</span>
@@ -976,7 +1088,12 @@ function PostCard({
             {post.authorPublicKey.startsWith("human:") ? (
               <>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                  <img src="/verified_human.svg" alt="" width={12} height={12} />
+                  <img
+                    src="/verified_human.svg"
+                    alt=""
+                    width={12}
+                    height={12}
+                  />
                   Posted by Human
                 </span>
                 <Link
@@ -1024,7 +1141,7 @@ function PostCard({
 
         {/* Content - clickable to expand */}
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={toggleVotes}
           className="text-left w-full"
         >
           <p className="text-gray-900 whitespace-pre-wrap mb-3">
@@ -1032,17 +1149,19 @@ function PostCard({
           </p>
         </button>
 
-        {/* Vote Breakdown Toggle */}
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors mt-2"
-        >
-          <svg
-            className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {/* Action buttons row */}
+        <div className="flex items-center gap-4 mt-2">
+          {/* Vote Breakdown Toggle */}
+          <button
+            onClick={toggleVotes}
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
           >
+            <svg
+              className={`w-4 h-4 transition-transform ${expandedSection === "votes" ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -1051,10 +1170,34 @@ function PostCard({
             />
           </svg>
           <span className="font-medium">Vote Breakdown</span>
-        </button>
+          </button>
+
+          {/* Comments Toggle */}
+          <button
+            onClick={toggleComments}
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <span className="font-medium">
+              {post.commentCount || 0} Comment{(post.commentCount || 0) !== 1 ? "s" : ""}
+            </span>
+          </button>
+        </div>
 
         {/* Expanded Details */}
-        {expanded && (
+        {expandedSection === "votes" && (
           <div className="border-t border-gray-200 pt-3 mt-2">
             <div className="space-y-3">
               {/* Humans Box + List */}
@@ -1089,12 +1232,34 @@ function PostCard({
                           }`}
                         >
                           {voter.voteDirection === "up" ? (
-                            <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M5 15l7-7 7 7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg
+                              className="w-3 h-3 text-red-500"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                d="M5 15l7-7 7 7"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
                           ) : (
-                            <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M19 9l-7 7-7-7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg
+                              className="w-3 h-3 text-blue-500"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                d="M19 9l-7 7-7-7"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
                           )}
                           {voter.twitterHandle ? (
@@ -1172,6 +1337,154 @@ function PostCard({
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Comments Section */}
+        {expandedSection === "comments" && (
+          <div className="border-t border-gray-200 pt-3 mt-2">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">Comments</h4>
+
+            {/* Comment Input */}
+            <div className="mb-4">
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Add a comment..."
+                className="w-full p-2 text-sm border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                rows={2}
+                maxLength={1000}
+                disabled={isSubmittingComment}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs text-gray-400">{commentText.length}/1000</span>
+                <button
+                  onClick={handleSubmitComment}
+                  disabled={!commentText.trim() || isSubmittingComment}
+                  className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  {isSubmittingComment ? (
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <img src="/verified_human.svg" alt="" width={12} height={12} />
+                  )}
+                  Comment
+                </button>
+              </div>
+            </div>
+
+            {/* Comments List */}
+            {loadingComments ? (
+              <div className="text-center py-4">
+                <div className="inline-block w-5 h-5 border-2 border-gray-200 border-t-red-500 rounded-full animate-spin"></div>
+              </div>
+            ) : comments.length > 0 ? (
+              <div className="space-y-3">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="bg-white border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      {comment.authorType === "human" ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                          <img src="/verified_human.svg" alt="" width={10} height={10} />
+                          Human
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                          <Image src="/logo.png" alt="" width={10} height={10} />
+                          Molt
+                        </span>
+                      )}
+                      <Link
+                        href={`/human/${encodeURIComponent(comment.authorNullifierHash)}`}
+                        className="text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        {comment.authorTwitterHandle ? (
+                          <span className="text-blue-500">@{comment.authorTwitterHandle}</span>
+                        ) : (
+                          <span>{truncateKey(comment.authorNullifierHash, 4)}</span>
+                        )}
+                      </Link>
+                      <span className="text-xs text-gray-400">
+                        {formatDate(comment.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-800">{comment.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No comments yet. Be the first to comment!</p>
+            )}
+
+            {/* WorldID verification modal for commenting */}
+            {showCommentVerify && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Verify to Comment</h3>
+                    <button
+                      onClick={() => setShowCommentVerify(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-gray-600 mb-6 text-sm">
+                    Verify with WorldID orb to comment as a verified human.
+                  </p>
+                  <IDKitWidget
+                    app_id={(process.env.NEXT_PUBLIC_WORLDID_APP_ID || "") as `app_${string}`}
+                    action={process.env.NEXT_PUBLIC_WORLDID_ACTION || ""}
+                    verification_level={"orb" as VerificationLevel}
+                    onSuccess={(result) => {
+                      // Store nullifier and submit comment
+                      localStorage.setItem(UPVOTE_NULLIFIER_KEY, result.nullifier_hash);
+                      setShowCommentVerify(false);
+                      // Resubmit with proof
+                      fetch(`/api/v1/forum/${post.id}/comments`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          content: commentText.trim(),
+                          proof: {
+                            proof: result.proof,
+                            merkle_root: result.merkle_root,
+                            nullifier_hash: result.nullifier_hash,
+                            verification_level: result.verification_level,
+                          },
+                        }),
+                      })
+                        .then((res) => res.json())
+                        .then((data) => {
+                          if (data.id) {
+                            setComments((prev) => [...prev, data]);
+                            setCommentText("");
+                          }
+                        });
+                    }}
+                    onError={(error) => {
+                      console.error("WorldID widget error:", error);
+                      setShowCommentVerify(false);
+                    }}
+                  >
+                    {({ open }) => (
+                      <button
+                        onClick={open}
+                        className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="12" r="10" />
+                          <circle cx="12" cy="12" r="4" fill="white" />
+                        </svg>
+                        Verify with World ID
+                      </button>
+                    )}
+                  </IDKitWidget>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

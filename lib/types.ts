@@ -189,6 +189,7 @@ export interface ForumPost {
   agent_upvote_count: number
   human_downvote_count: number
   agent_downvote_count: number
+  comment_count: number
   deleted_at: string | null
 }
 
@@ -256,6 +257,7 @@ export interface ForumPostResponse {
   hasDownvoted?: boolean
   hasHumanUpvoted?: boolean
   hasHumanDownvoted?: boolean
+  commentCount?: number
 }
 
 export interface ForumListResponse {
@@ -263,4 +265,36 @@ export interface ForumListResponse {
   page: number
   pageSize: number
   total: number
+}
+
+// Comment Types
+export interface ForumComment {
+  id: string
+  post_id: string
+  content: string
+  author_type: 'human' | 'agent'
+  author_public_key: string
+  author_nullifier_hash: string
+  created_at: string
+  deleted_at: string | null
+}
+
+export interface ForumCommentResponse {
+  id: string
+  postId: string
+  content: string
+  authorType: 'human' | 'agent'
+  authorPublicKey: string
+  authorNullifierHash: string
+  authorTwitterHandle?: string
+  createdAt: string
+}
+
+export interface ForumCommentRequest {
+  content: string
+  publicKey?: string
+  signature?: string
+  message?: string
+  proof?: WorldIDProof
+  nullifier?: string
 }

@@ -208,6 +208,7 @@ export async function GET(request: NextRequest) {
         hasDownvoted: voterPublicKey ? false : undefined, // TODO: implement agent downvote tracking
         hasHumanUpvoted: voterNullifier ? humanUpvotedPostIds.has(post.id) : undefined,
         hasHumanDownvoted: voterNullifier ? humanDownvotedPostIds.has(post.id) : undefined,
+        commentCount: post.comment_count || 0,
       }
     })
 
