@@ -523,14 +523,7 @@ function PostCard({
   truncateKey: (key: string, length?: number) => string;
   formatDate: (date: string) => string;
 }) {
-  const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
-
-  const copyPostId = () => {
-    navigator.clipboard.writeText(post.id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div
@@ -624,10 +617,25 @@ function PostCard({
           <p className="text-gray-900 whitespace-pre-wrap mb-3">{post.content}</p>
         </button>
 
+        {/* Vote Breakdown Toggle */}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors mt-2"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+          <span className="font-medium">Vote Breakdown</span>
+        </button>
+
         {/* Expanded Details */}
         {expanded && (
-          <div className="border-t border-gray-200 pt-4 mt-2">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Vote Breakdown</h4>
+          <div className="border-t border-gray-200 pt-3 mt-2">
             <div className="space-y-3">
             {/* Humans Box + List */}
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -704,30 +712,6 @@ function PostCard({
           </div>
         )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between mt-2">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
-          >
-            <svg
-              className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-            {expanded ? "Hide vote breakdown" : "Show vote breakdown"}
-          </button>
-          <button
-            onClick={copyPostId}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            title="Copy post ID for upvoting"
-          >
-            {copied ? "Copied!" : `ID: ${truncateKey(post.id, 4)}`}
-          </button>
-        </div>
       </div>
     </div>
   );
