@@ -67,14 +67,7 @@ export default function HumanGraph() {
         const result = await response.json();
 
         if (result.queryType === "human_id" && result.verified) {
-          // TODO: Remove this mock data - just for UI testing
-          const mockMolts: MoltInfo[] = Array.from({ length: 50 }, (_, i) => ({
-            deviceId: `mock-device-${i + 1}`,
-            publicKey: `MCowBQYDK2VwAyEA${Math.random().toString(36).slice(2, 34)}`,
-            verificationLevel: "orb",
-            registeredAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-          }));
-          setData({ ...result, molts: [...result.molts, ...mockMolts] });
+          setData(result);
         } else {
           setError("No molts found for this human identifier");
         }
@@ -207,7 +200,7 @@ export default function HumanGraph() {
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >
-                Forum
+                Swarm
               </Link>
               <Link
                 href="/developers"

@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.onemolt.ai"),
   title: "OneMolt - Give Your Molt the Weight of a Real Human",
   description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
   icons: {

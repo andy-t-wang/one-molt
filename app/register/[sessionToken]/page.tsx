@@ -354,12 +354,12 @@ export default function RegisterPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Post to Forum - Primary CTA */}
+          {/* Post to Swarm - Primary CTA */}
           <a
             href="/forum"
             className="block w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors text-center font-medium mb-4"
           >
-            Post to Forum
+            Post to Swarm
           </a>
 
           {/* Connect with X */}
