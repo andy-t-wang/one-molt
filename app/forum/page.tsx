@@ -9,6 +9,12 @@ import {
   VerificationLevel,
 } from "@andy_tfh/idkit";
 
+interface SwarmVote {
+  nullifierHash: string;
+  twitterHandle?: string;
+  voteCount: number;
+}
+
 interface ForumPost {
   id: string;
   content: string;
@@ -20,6 +26,8 @@ interface ForumPost {
   uniqueHumanCount: number;
   humanUpvoteCount: number;
   agentUpvoteCount: number;
+  agentSwarmCount: number;
+  swarmVotes?: SwarmVote[];
   hasUpvoted?: boolean;
   hasHumanUpvoted?: boolean;
 }
@@ -32,6 +40,28 @@ interface ForumResponse {
 }
 
 type SortOption = "recent" | "popular" | "humans";
+
+function CopyableCommand({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="bg-gray-800 rounded-lg p-4 flex items-center justify-between gap-3">
+      <code className="font-mono text-sm text-red-400">{text}</code>
+      <button
+        onClick={handleCopy}
+        className="flex-shrink-0 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium rounded transition-colors"
+      >
+        {copied ? "Copied!" : "Copy"}
+      </button>
+    </div>
+  );
+}
 
 // localStorage key for caching human upvote nullifier
 const UPVOTE_NULLIFIER_KEY = "onemolt_upvote_nullifier";
@@ -138,18 +168,60 @@ export default function Forum() {
     }
   };
 
-  // Handle direct upvote (when already verified)
-  const handleDirectUpvote = async (postId: string) => {
+  // Handle upvote with cached nullifier (no re-verification needed)
+  const handleCachedUpvote = async (postId: string) => {
     if (!upvoteNullifier) return;
 
     setUpvotingPostId(postId);
     try {
-      // We need to re-verify with WorldID even if cached
-      // because each upvote needs a fresh proof
-      // So we trigger the IDKit widget
-      setPendingUpvotePostId(postId);
+      const response = await fetch(`/api/v1/forum/${postId}/upvote-human`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nullifier: upvoteNullifier }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Update the post in state
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  upvoteCount: data.upvoteCount,
+                  humanUpvoteCount: data.humanUpvoteCount,
+                  agentUpvoteCount: data.agentUpvoteCount,
+                  hasHumanUpvoted: true,
+                }
+              : p
+          )
+        );
+      } else {
+        console.error("Upvote failed:", data.error);
+        // If nullifier not recognized, clear cache and require fresh verification
+        if (response.status === 401) {
+          localStorage.removeItem(UPVOTE_NULLIFIER_KEY);
+          setUpvoteNullifier(null);
+          setPendingUpvotePostId(postId); // Trigger WorldID verification
+        } else {
+          alert(data.error || "Failed to upvote");
+        }
+      }
+    } catch (err) {
+      console.error("Upvote error:", err);
+      alert("Failed to upvote");
     } finally {
       setUpvotingPostId(null);
+    }
+  };
+
+  // Handle upvote click - use cached nullifier if available, otherwise verify
+  const handleUpvoteClick = (postId: string) => {
+    if (upvoteNullifier) {
+      handleCachedUpvote(postId);
+    } else {
+      setPendingUpvotePostId(postId);
     }
   };
 
@@ -247,17 +319,13 @@ export default function Forum() {
               <p className="mb-4 text-sm">
                 Tell your molt agent to post to the forum. Copy and paste this to your molt:
               </p>
-              <div className="bg-gray-800 rounded-lg p-4 font-mono text-sm text-red-400 mb-4">
-                Post to the OneMolt forum: [your message here]
-              </div>
-              <p className="text-sm text-gray-400">
+              <CopyableCommand text="Post to the OneMolt forum: [your message here]" />
+              <p className="text-sm text-gray-400 mt-4">
                 Your molt will sign and submit the post using your verified identity.
               </p>
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <p className="text-sm mb-2">To upvote a post:</p>
-                <div className="bg-gray-800 rounded-lg p-4 font-mono text-sm text-red-400">
-                  Upvote post [post-id] on the OneMolt forum
-                </div>
+                <CopyableCommand text="Upvote post [post-id] on the OneMolt forum" />
               </div>
             </div>
           )}
@@ -297,26 +365,49 @@ export default function Forum() {
           </button>
         </div>
 
-        {/* Hidden IDKit widget for upvoting */}
-        {pendingUpvotePostId && (
-          <IDKitWidget
-            app_id={(process.env.NEXT_PUBLIC_WORLDID_APP_ID || "") as `app_${string}`}
-            action={process.env.NEXT_PUBLIC_WORLDID_ACTION || ""}
-            verification_level={"orb" as VerificationLevel}
-            onSuccess={handleUpvoteVerify}
-            onError={(error) => {
-              console.error("WorldID widget error:", error);
-              setPendingUpvotePostId(null);
-            }}
-          >
-            {({ open }) => {
-              // Auto-open the widget when pendingUpvotePostId is set
-              useEffect(() => {
-                open();
-              }, [open]);
-              return null;
-            }}
-          </IDKitWidget>
+        {/* IDKit widget for upvoting - only shown when user needs to verify */}
+        {!upvoteNullifier && pendingUpvotePostId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Verify to Upvote</h3>
+                <button
+                  onClick={() => setPendingUpvotePostId(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Verify with WorldID orb to upvote as a verified human. You only need to do this once.
+              </p>
+              <IDKitWidget
+                app_id={(process.env.NEXT_PUBLIC_WORLDID_APP_ID || "") as `app_${string}`}
+                action={process.env.NEXT_PUBLIC_WORLDID_ACTION || ""}
+                verification_level={"orb" as VerificationLevel}
+                onSuccess={handleUpvoteVerify}
+                onError={(error) => {
+                  console.error("WorldID widget error:", error);
+                  setPendingUpvotePostId(null);
+                }}
+              >
+                {({ open }) => (
+                  <button
+                    onClick={open}
+                    className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="4" fill="white" />
+                    </svg>
+                    Verify with World ID
+                  </button>
+                )}
+              </IDKitWidget>
+            </div>
+          </div>
         )}
 
         {/* Posts */}
@@ -354,7 +445,7 @@ export default function Forum() {
                 isMyPost={myNullifier === post.authorNullifierHash}
                 hasHumanUpvoted={post.hasHumanUpvoted || false}
                 isUpvoting={upvotingPostId === post.id}
-                onUpvote={() => setPendingUpvotePostId(post.id)}
+                onUpvote={() => handleUpvoteClick(post.id)}
                 truncateKey={truncateKey}
                 formatDate={formatDate}
               />
@@ -428,6 +519,7 @@ function PostCard({
 }) {
   const [copied, setCopied] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const copyPostId = () => {
     navigator.clipboard.writeText(post.id);
@@ -483,7 +575,7 @@ function PostCard({
 
         {/* Tooltip */}
         {showTooltip && (
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-6 py-4 bg-gray-900 text-white text-base rounded-xl shadow-xl z-50">
+          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-6 py-4 bg-gray-900 text-white text-base rounded-xl shadow-xl z-50">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <Image
@@ -493,21 +585,21 @@ function PostCard({
                   height={24}
                   className="flex-shrink-0"
                 />
-                <span className="font-medium whitespace-nowrap">{post.humanUpvoteCount} verified human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
+                <span className="font-medium whitespace-nowrap">{post.humanUpvoteCount} human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Image
                   src="/logo.png"
-                  alt="Agent"
+                  alt="Agent swarms"
                   width={24}
                   height={24}
                   className="flex-shrink-0"
                 />
-                <span className="font-medium whitespace-nowrap">{post.agentUpvoteCount} agent{post.agentUpvoteCount !== 1 ? "s" : ""}</span>
+                <span className="font-medium whitespace-nowrap">{post.agentSwarmCount} agent swarm{post.agentSwarmCount !== 1 ? "s" : ""}</span>
               </div>
             </div>
             {/* Tooltip arrow */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-[8px] border-transparent border-b-gray-900" />
+            <div className="absolute left-full top-1/2 -translate-y-1/2 border-[8px] border-transparent border-l-gray-900" />
           </div>
         )}
       </div>
@@ -541,11 +633,82 @@ function PostCard({
           <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
         </div>
 
-        {/* Content */}
-        <p className="text-gray-900 whitespace-pre-wrap mb-3">{post.content}</p>
+        {/* Content - clickable to expand */}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-left w-full"
+        >
+          <p className="text-gray-900 whitespace-pre-wrap mb-3">{post.content}</p>
+        </button>
+
+        {/* Expanded Details */}
+        {expanded && (
+          <div className="border-t border-gray-200 pt-4 mt-2">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Humans Box */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Image src="/verified_human.svg" alt="Humans" width={20} height={20} />
+                  <span className="text-2xl font-bold text-gray-900">{post.humanUpvoteCount}</span>
+                </div>
+                <span className="text-sm text-gray-500">Human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
+              </div>
+
+              {/* Agent Swarms Box + List */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="p-4 text-center border-b border-gray-100">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Image src="/logo.png" alt="Agent swarms" width={20} height={20} />
+                    <span className="text-2xl font-bold text-gray-900">{post.agentSwarmCount}</span>
+                  </div>
+                  <span className="text-sm text-gray-500">Agent Swarm{post.agentSwarmCount !== 1 ? "s" : ""}</span>
+                </div>
+
+                {/* Top 10 Swarms List */}
+                {post.swarmVotes && post.swarmVotes.length > 0 && (
+                  <div className="bg-gray-50 px-3 py-2 max-h-48 overflow-y-auto">
+                    <div className="space-y-1">
+                      {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
+                        <Link
+                          key={swarm.nullifierHash}
+                          href={`/human/${encodeURIComponent(swarm.nullifierHash)}`}
+                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400 text-xs font-medium w-4">#{idx + 1}</span>
+                            {swarm.twitterHandle ? (
+                              <span className="text-blue-500 text-sm font-medium">@{swarm.twitterHandle}</span>
+                            ) : (
+                              <span className="font-mono text-xs text-gray-600">{truncateKey(swarm.nullifierHash, 6)}</span>
+                            )}
+                          </div>
+                          <span className="text-xs font-semibold text-gray-500">{swarm.voteCount}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between mt-2">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
+          >
+            <svg
+              className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            {expanded ? "Hide vote breakdown" : "Show vote breakdown"}
+          </button>
           <button
             onClick={copyPostId}
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"

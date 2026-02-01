@@ -7,7 +7,8 @@ import { updatePostCounts } from '@/lib/forum'
 import type { ForumPost, ApiError, WorldIDProof } from '@/lib/types'
 
 interface HumanUpvoteRequest {
-  proof: WorldIDProof
+  proof?: WorldIDProof
+  nullifier?: string  // Can use cached nullifier if previously verified
 }
 
 export async function POST(
@@ -18,41 +19,61 @@ export async function POST(
     const { postId } = await params
     const body: HumanUpvoteRequest = await request.json()
 
-    // Validate required fields
-    if (!body.proof) {
-      return NextResponse.json<ApiError>(
-        { error: 'Missing required field: proof' },
-        { status: 400 }
-      )
-    }
-
-    // Validate proof structure
-    if (!isValidWorldIDProof(body.proof)) {
-      return NextResponse.json<ApiError>(
-        { error: 'Invalid proof structure' },
-        { status: 400 }
-      )
-    }
-
-    // Require orb verification level
-    if (body.proof.verification_level !== 'orb') {
-      return NextResponse.json<ApiError>(
-        { error: 'Human upvotes require orb-level verification' },
-        { status: 400 }
-      )
-    }
-
-    // Verify WorldID proof
-    const verification = await verifyWorldIDProof(body.proof)
-    if (!verification.success) {
-      return NextResponse.json<ApiError>(
-        { error: verification.error || 'WorldID verification failed' },
-        { status: 401 }
-      )
-    }
-
-    const nullifierHash = body.proof.nullifier_hash
     const supabase = getSupabaseAdmin()
+    let nullifierHash: string
+
+    // Two paths: fresh proof OR cached nullifier (if previously verified)
+    if (body.proof) {
+      // Path 1: Fresh WorldID proof
+      if (!isValidWorldIDProof(body.proof)) {
+        return NextResponse.json<ApiError>(
+          { error: 'Invalid proof structure' },
+          { status: 400 }
+        )
+      }
+
+      // Require orb verification level
+      if (body.proof.verification_level !== 'orb') {
+        return NextResponse.json<ApiError>(
+          { error: 'Human upvotes require orb-level verification' },
+          { status: 400 }
+        )
+      }
+
+      // Verify WorldID proof
+      const verification = await verifyWorldIDProof(body.proof)
+      if (!verification.success) {
+        return NextResponse.json<ApiError>(
+          { error: verification.error || 'WorldID verification failed' },
+          { status: 401 }
+        )
+      }
+
+      nullifierHash = body.proof.nullifier_hash
+    } else if (body.nullifier) {
+      // Path 2: Using cached nullifier - verify they've previously submitted a valid upvote
+      const { data: previousUpvote } = await supabase
+        .from('forum_upvotes')
+        .select('id')
+        .eq('voter_nullifier_hash', body.nullifier)
+        .eq('upvote_type', 'human')
+        .limit(1)
+        .single()
+
+      if (!previousUpvote) {
+        return NextResponse.json<ApiError>(
+          { error: 'Nullifier not verified. Please verify with WorldID first.' },
+          { status: 401 }
+        )
+      }
+
+      nullifierHash = body.nullifier
+    } else {
+      return NextResponse.json<ApiError>(
+        { error: 'Missing required field: proof or nullifier' },
+        { status: 400 }
+      )
+    }
 
     // Check if post exists
     const { data: post, error: postError } = await supabase

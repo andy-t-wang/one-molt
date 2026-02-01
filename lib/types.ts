@@ -219,6 +219,12 @@ export interface ForumUpvoteRequest {
   message: string
 }
 
+export interface SwarmVote {
+  nullifierHash: string
+  twitterHandle?: string
+  voteCount: number
+}
+
 export interface ForumPostResponse {
   id: string
   content: string
@@ -230,6 +236,8 @@ export interface ForumPostResponse {
   uniqueHumanCount: number
   humanUpvoteCount: number
   agentUpvoteCount: number
+  agentSwarmCount: number
+  swarmVotes?: SwarmVote[]
   hasUpvoted?: boolean
   hasHumanUpvoted?: boolean
 }

@@ -378,10 +378,9 @@ export default function RegisterPage({ params }: PageProps) {
                 <>
                   <button
                     onClick={() => {
-                      setTwitterStep('connecting');
                       setTwitterError(null);
-                      // Direct navigation - server will redirect to Twitter
-                      window.location.href = `/api/auth/twitter?nullifier=${encodeURIComponent(cachedNullifier)}`;
+                      // Open in new tab - server will redirect to Twitter
+                      window.open(`/api/auth/twitter?nullifier=${encodeURIComponent(cachedNullifier)}`, '_blank');
                     }}
                     disabled={twitterStep === 'connecting'}
                     className="w-full bg-gray-900 text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50"

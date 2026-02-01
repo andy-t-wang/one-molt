@@ -75,8 +75,9 @@ export default function Leaderboard() {
     if (!myNullifier) return;
     setTwitterError(null);
     setTwitterLoading(true);
-    // Direct navigation - server will redirect to Twitter
-    window.location.href = `/api/auth/twitter?nullifier=${encodeURIComponent(myNullifier)}`;
+    // Open in new tab - server will redirect to Twitter
+    window.open(`/api/auth/twitter?nullifier=${encodeURIComponent(myNullifier)}`, '_blank');
+    setTwitterLoading(false);
   };
 
   const truncateHash = (hash: string, length: number = 8) => {

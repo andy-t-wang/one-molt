@@ -90,21 +90,76 @@ export async function GET(request: NextRequest) {
       humanUpvotedPostIds = new Set(humanUpvotes?.map(u => u.post_id) || [])
     }
 
+    // Get all agent upvotes for these posts to calculate swarm data
+    const postIds = (posts as ForumPost[]).map(p => p.id)
+    const { data: agentUpvotes } = await supabase
+      .from('forum_upvotes')
+      .select('post_id, voter_nullifier_hash')
+      .eq('upvote_type', 'agent')
+      .in('post_id', postIds)
+
+    // Group agent upvotes by post_id and nullifier_hash
+    const swarmDataByPost = new Map<string, Map<string, number>>()
+    for (const upvote of agentUpvotes || []) {
+      if (!swarmDataByPost.has(upvote.post_id)) {
+        swarmDataByPost.set(upvote.post_id, new Map())
+      }
+      const postSwarms = swarmDataByPost.get(upvote.post_id)!
+      postSwarms.set(upvote.voter_nullifier_hash, (postSwarms.get(upvote.voter_nullifier_hash) || 0) + 1)
+    }
+
+    // Get all unique nullifier hashes from agent upvotes to fetch their twitter handles
+    const allSwarmNullifiers = new Set<string>()
+    for (const upvote of agentUpvotes || []) {
+      allSwarmNullifiers.add(upvote.voter_nullifier_hash)
+    }
+
+    // Fetch twitter handles for swarm voters
+    let swarmTwitterMap = new Map<string, string>()
+    if (allSwarmNullifiers.size > 0) {
+      const { data: swarmTwitterClaims } = await supabase
+        .from('twitter_claims')
+        .select('nullifier_hash, twitter_handle')
+        .in('nullifier_hash', [...allSwarmNullifiers])
+
+      swarmTwitterMap = new Map(
+        swarmTwitterClaims?.map(tc => [tc.nullifier_hash, tc.twitter_handle]) || []
+      )
+    }
+
     // Transform posts to response format
-    const postResponses: ForumPostResponse[] = (posts as ForumPost[]).map(post => ({
-      id: post.id,
-      content: post.content,
-      authorPublicKey: post.author_public_key,
-      authorNullifierHash: post.author_nullifier_hash,
-      authorTwitterHandle: twitterMap.get(post.author_nullifier_hash),
-      createdAt: post.created_at,
-      upvoteCount: post.upvote_count,
-      uniqueHumanCount: post.unique_human_count,
-      humanUpvoteCount: post.human_upvote_count,
-      agentUpvoteCount: post.agent_upvote_count,
-      hasUpvoted: voterPublicKey ? upvotedPostIds.has(post.id) : undefined,
-      hasHumanUpvoted: voterNullifier ? humanUpvotedPostIds.has(post.id) : undefined,
-    }))
+    const postResponses: ForumPostResponse[] = (posts as ForumPost[]).map(post => {
+      const postSwarms = swarmDataByPost.get(post.id)
+      const agentSwarmCount = postSwarms?.size || 0
+
+      // Build swarm votes array sorted by vote count descending
+      const swarmVotes = postSwarms
+        ? [...postSwarms.entries()]
+            .map(([nullifierHash, voteCount]) => ({
+              nullifierHash,
+              twitterHandle: swarmTwitterMap.get(nullifierHash),
+              voteCount,
+            }))
+            .sort((a, b) => b.voteCount - a.voteCount)
+        : []
+
+      return {
+        id: post.id,
+        content: post.content,
+        authorPublicKey: post.author_public_key,
+        authorNullifierHash: post.author_nullifier_hash,
+        authorTwitterHandle: twitterMap.get(post.author_nullifier_hash),
+        createdAt: post.created_at,
+        upvoteCount: post.upvote_count,
+        uniqueHumanCount: post.unique_human_count,
+        humanUpvoteCount: post.human_upvote_count,
+        agentUpvoteCount: post.agent_upvote_count,
+        agentSwarmCount,
+        swarmVotes,
+        hasUpvoted: voterPublicKey ? upvotedPostIds.has(post.id) : undefined,
+        hasHumanUpvoted: voterNullifier ? humanUpvotedPostIds.has(post.id) : undefined,
+      }
+    })
 
     const response: ForumListResponse = {
       posts: postResponses,
@@ -208,6 +263,8 @@ export async function POST(request: NextRequest) {
       uniqueHumanCount: post.unique_human_count,
       humanUpvoteCount: post.human_upvote_count,
       agentUpvoteCount: post.agent_upvote_count,
+      agentSwarmCount: 0,
+      swarmVotes: [],
     }
 
     return NextResponse.json(response, { status: 201 })

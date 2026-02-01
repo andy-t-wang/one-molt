@@ -143,8 +143,9 @@ export default function HumanGraph() {
   const handleConnectTwitter = () => {
     setTwitterError(null);
     setTwitterLoading(true);
-    // Direct navigation - server will redirect to Twitter
-    window.location.href = `/api/auth/twitter?nullifier=${encodeURIComponent(nullifierHash)}`;
+    // Open in new tab - server will redirect to Twitter
+    window.open(`/api/auth/twitter?nullifier=${encodeURIComponent(nullifierHash)}`, '_blank');
+    setTwitterLoading(false);
   };
 
   const truncateKey = (key: string, length: number = 8) => {
