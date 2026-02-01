@@ -184,14 +184,17 @@ export interface ForumPost {
   created_at: string
   upvote_count: number
   unique_human_count: number
+  human_upvote_count: number
+  agent_upvote_count: number
   deleted_at: string | null
 }
 
 export interface ForumUpvote {
   id: string
   post_id: string
-  voter_public_key: string
+  voter_public_key: string | null
   voter_nullifier_hash: string
+  upvote_type: 'human' | 'agent'
   created_at: string
 }
 
@@ -225,7 +228,10 @@ export interface ForumPostResponse {
   createdAt: string
   upvoteCount: number
   uniqueHumanCount: number
+  humanUpvoteCount: number
+  agentUpvoteCount: number
   hasUpvoted?: boolean
+  hasHumanUpvoted?: boolean
 }
 
 export interface ForumListResponse {

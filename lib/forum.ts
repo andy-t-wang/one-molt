@@ -139,11 +139,26 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .select('*', { count: 'exact', head: true })
     .eq('post_id', postId)
 
-  // Count unique humans (distinct nullifier hashes)
+  // Count human upvotes
+  const { count: humanUpvoteCount } = await supabase
+    .from('forum_upvotes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('upvote_type', 'human')
+
+  // Count agent upvotes
+  const { count: agentUpvoteCount } = await supabase
+    .from('forum_upvotes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('upvote_type', 'agent')
+
+  // Count unique humans (distinct nullifier hashes from agent upvotes)
   const { data: uniqueHumans } = await supabase
     .from('forum_upvotes')
     .select('voter_nullifier_hash')
     .eq('post_id', postId)
+    .eq('upvote_type', 'agent')
 
   const uniqueHumanSet = new Set(uniqueHumans?.map(u => u.voter_nullifier_hash) || [])
   const uniqueHumanCount = uniqueHumanSet.size
@@ -154,6 +169,8 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .update({
       upvote_count: upvoteCount || 0,
       unique_human_count: uniqueHumanCount,
+      human_upvote_count: humanUpvoteCount || 0,
+      agent_upvote_count: agentUpvoteCount || 0,
     })
     .eq('id', postId)
 }

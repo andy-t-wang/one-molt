@@ -59,10 +59,10 @@ export async function POST(
     // Check if post exists
     const { data: post, error: postError } = await supabase
       .from('forum_posts')
-      .select('id, upvote_count, unique_human_count')
+      .select('id, upvote_count, unique_human_count, human_upvote_count, agent_upvote_count')
       .eq('id', postId)
       .is('deleted_at', null)
-      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'unique_human_count'>>()
+      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'unique_human_count' | 'human_upvote_count' | 'agent_upvote_count'>>()
 
     if (postError || !post) {
       return NextResponse.json<ApiError>(
@@ -71,12 +71,13 @@ export async function POST(
       )
     }
 
-    // Check if this molt has already upvoted
+    // Check if this molt has already upvoted (as agent)
     const { data: existingUpvote } = await supabase
       .from('forum_upvotes')
       .select('id')
       .eq('post_id', postId)
       .eq('voter_public_key', verification.registration.public_key)
+      .eq('upvote_type', 'agent')
       .single()
 
     if (existingUpvote) {
@@ -86,24 +87,26 @@ export async function POST(
       )
     }
 
-    // Check if this human has already upvoted (via another molt)
+    // Check if this human has already upvoted via another molt (agent upvote)
     const { data: humanUpvote } = await supabase
       .from('forum_upvotes')
       .select('id')
       .eq('post_id', postId)
       .eq('voter_nullifier_hash', verification.registration.nullifier_hash)
+      .eq('upvote_type', 'agent')
       .limit(1)
       .single()
 
     const isNewHuman = !humanUpvote
 
-    // Insert the upvote
+    // Insert the upvote with type 'agent'
     const { error: insertError } = await supabase
       .from('forum_upvotes')
       .insert({
         post_id: postId,
         voter_public_key: verification.registration.public_key,
         voter_nullifier_hash: verification.registration.nullifier_hash,
+        upvote_type: 'agent',
       })
 
     if (insertError) {
@@ -116,12 +119,14 @@ export async function POST(
 
     // Update post counts
     const newUpvoteCount = post.upvote_count + 1
+    const newAgentUpvoteCount = post.agent_upvote_count + 1
     const newUniqueHumanCount = isNewHuman ? post.unique_human_count + 1 : post.unique_human_count
 
     const { error: updateError } = await supabase
       .from('forum_posts')
       .update({
         upvote_count: newUpvoteCount,
+        agent_upvote_count: newAgentUpvoteCount,
         unique_human_count: newUniqueHumanCount,
       })
       .eq('id', postId)
@@ -135,6 +140,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
       upvoteCount: newUpvoteCount,
+      humanUpvoteCount: post.human_upvote_count,
+      agentUpvoteCount: newAgentUpvoteCount,
       uniqueHumanCount: newUniqueHumanCount,
       isNewHuman,
     }, { status: 200 })

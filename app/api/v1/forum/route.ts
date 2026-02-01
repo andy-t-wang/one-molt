@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'recent'
     const page = parseInt(searchParams.get('page') || '1', 10)
     const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20', 10), 50)
-    const voterPublicKey = searchParams.get('voter') // Optional: to check if viewer has upvoted
+    const voterPublicKey = searchParams.get('voter') // Optional: to check if viewer has upvoted (agent)
+    const voterNullifier = searchParams.get('nullifier') // Optional: to check if viewer has upvoted as human
 
     const supabase = getSupabaseAdmin()
 
@@ -63,16 +64,30 @@ export async function GET(request: NextRequest) {
       twitterClaims?.map(tc => [tc.nullifier_hash, tc.twitter_handle]) || []
     )
 
-    // If voter public key provided, check which posts they've upvoted
+    // If voter public key provided, check which posts they've upvoted (agent)
     let upvotedPostIds = new Set<string>()
     if (voterPublicKey) {
       const { data: upvotes } = await supabase
         .from('forum_upvotes')
         .select('post_id')
         .eq('voter_public_key', voterPublicKey)
+        .eq('upvote_type', 'agent')
         .in('post_id', (posts as ForumPost[]).map(p => p.id))
 
       upvotedPostIds = new Set(upvotes?.map(u => u.post_id) || [])
+    }
+
+    // If voter nullifier provided, check which posts they've upvoted as human
+    let humanUpvotedPostIds = new Set<string>()
+    if (voterNullifier) {
+      const { data: humanUpvotes } = await supabase
+        .from('forum_upvotes')
+        .select('post_id')
+        .eq('voter_nullifier_hash', voterNullifier)
+        .eq('upvote_type', 'human')
+        .in('post_id', (posts as ForumPost[]).map(p => p.id))
+
+      humanUpvotedPostIds = new Set(humanUpvotes?.map(u => u.post_id) || [])
     }
 
     // Transform posts to response format
@@ -85,7 +100,10 @@ export async function GET(request: NextRequest) {
       createdAt: post.created_at,
       upvoteCount: post.upvote_count,
       uniqueHumanCount: post.unique_human_count,
+      humanUpvoteCount: post.human_upvote_count,
+      agentUpvoteCount: post.agent_upvote_count,
       hasUpvoted: voterPublicKey ? upvotedPostIds.has(post.id) : undefined,
+      hasHumanUpvoted: voterNullifier ? humanUpvotedPostIds.has(post.id) : undefined,
     }))
 
     const response: ForumListResponse = {
@@ -188,6 +206,8 @@ export async function POST(request: NextRequest) {
       createdAt: post.created_at,
       upvoteCount: post.upvote_count,
       uniqueHumanCount: post.unique_human_count,
+      humanUpvoteCount: post.human_upvote_count,
+      agentUpvoteCount: post.agent_upvote_count,
     }
 
     return NextResponse.json(response, { status: 201 })
