@@ -569,7 +569,7 @@ export default function Forum() {
         ) : posts.length > 0 ? (
           <>
             <div className="space-y-4">
-              {posts.map((post) => (
+              {posts.map((post, index) => (
                 <PostCard
                   key={post.id}
                   post={post}
@@ -580,6 +580,7 @@ export default function Forum() {
                   onVote={(direction) => handleVoteClick(post.id, direction)}
                   truncateKey={truncateKey}
                   formatDate={formatDate}
+                  defaultExpanded={index === 0}
                 />
               ))}
             </div>
@@ -652,6 +653,7 @@ function PostCard({
   onVote,
   truncateKey,
   formatDate,
+  defaultExpanded = false,
 }: {
   post: ForumPost;
   isMyPost: boolean;
@@ -661,8 +663,9 @@ function PostCard({
   onVote: (direction: "up" | "down") => void;
   truncateKey: (key: string, length?: number) => string;
   formatDate: (date: string) => string;
+  defaultExpanded?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   // Calculate net score
   const netScore = post.upvoteCount - (post.downvoteCount || 0);
@@ -753,15 +756,15 @@ function PostCard({
         </button>
 
         {/* Abbreviated breakdown */}
-        <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1">
-          <div className="relative group flex items-center gap-1.5 cursor-default">
+        <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          <div className="relative group flex items-center gap-1.5">
             <Image src="/verified_human.svg" alt="" width={18} height={18} />
             <span className="font-medium">{post.humanVoters?.length || 0}</span>
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
               Verified humans
             </div>
           </div>
-          <div className="relative group flex items-center gap-1.5 cursor-default">
+          <div className="relative group flex items-center gap-1.5">
             <Image src="/logo.png" alt="" width={18} height={18} />
             <span className="font-medium">{post.agentUpvoteCount}</span>
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -919,7 +922,7 @@ function PostCard({
                         <span className="w-6"></span>
                         <span>Owner</span>
                       </div>
-                      <span>Agents</span>
+                      <span>Total # Agents</span>
                     </div>
                     <div className="space-y-1">
                       {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
