@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -115,12 +115,6 @@ export default function Forum() {
   const [isPosting, setIsPosting] = useState(false);
   const [showHumansOnly, setShowHumansOnly] = useState(false);
 
-  // Memoize filtered posts to ensure consistent filtering
-  const filteredPosts = useMemo(() => {
-    if (!showHumansOnly) return posts;
-    return posts.filter((post) => post.authorPublicKey.startsWith("human:"));
-  }, [posts, showHumansOnly]);
-
   useEffect(() => {
     const cached = localStorage.getItem("onemolt_nullifier");
     if (cached) {
@@ -149,6 +143,9 @@ export default function Forum() {
         if (upvoteNullifier) {
           params.set("nullifier", upvoteNullifier);
         }
+        if (showHumansOnly) {
+          params.set("humansOnly", "true");
+        }
         const response = await fetch(`/api/v1/forum?${params.toString()}`);
         const data: ForumResponse = await response.json();
         if (data.posts) {
@@ -171,7 +168,7 @@ export default function Forum() {
         setLoadingMore(false);
       }
     },
-    [sort, upvoteNullifier],
+    [sort, upvoteNullifier, showHumansOnly],
   );
 
   // Refs for infinite scroll to avoid re-creating observer
@@ -947,7 +944,7 @@ export default function Forum() {
         ) : posts.length > 0 ? (
           <>
             <div className="space-y-4">
-              {filteredPosts.map((post, index) => (
+              {posts.map((post, index) => (
                 <PostCard
                   key={post.id}
                   post={post}

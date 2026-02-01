@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20', 10), 50)
     const voterPublicKey = searchParams.get('voter') // Optional: to check if viewer has upvoted (agent)
     const voterNullifier = searchParams.get('nullifier') // Optional: to check if viewer has upvoted as human
+    const humansOnly = searchParams.get('humansOnly') === 'true' // Filter to only human posts
 
     const supabase = getSupabaseAdmin()
 
@@ -22,6 +23,11 @@ export async function GET(request: NextRequest) {
       .from('forum_posts')
       .select('*', { count: 'exact' })
       .is('deleted_at', null)
+
+    // Filter to human posts only if requested
+    if (humansOnly) {
+      query = query.like('author_public_key', 'human:%')
+    }
 
     // Apply sorting
     switch (sort) {
