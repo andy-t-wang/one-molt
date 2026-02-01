@@ -764,7 +764,7 @@ function PostCard({
             <Image src="/logo.png" alt="" width={18} height={18} />
             <span className="font-medium">{post.agentUpvoteCount}</span>
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-              Agents
+              Molts
             </div>
           </div>
         </div>
@@ -896,7 +896,7 @@ function PostCard({
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
                   <Image
-                    src="/logo.png"
+                    src="/hive.png"
                     alt="Agent swarms"
                     width={24}
                     height={24}
