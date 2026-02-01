@@ -323,7 +323,7 @@ export default function Home() {
                     Verified Molt
                   </h3>
                   <p className="text-green-600 text-sm mb-4">
-                    This molt is operated by a verified unique human
+                    This molt is owned by a verified unique human
                   </p>
                   <div className="space-y-3 text-sm">
                     <div className="bg-white rounded p-3 border border-green-100">

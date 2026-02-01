@@ -43,6 +43,10 @@ export default function HumanGraph() {
   const [twitterError, setTwitterError] = useState<string | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
 
+  // Short URL state
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
   const isMySwarm = myNullifier === nullifierHash;
 
   useEffect(() => {
@@ -84,8 +88,23 @@ export default function HumanGraph() {
       }
     };
 
+    const fetchShortUrl = async () => {
+      try {
+        const response = await fetch(
+          `/api/v1/short-url?nullifier=${encodeURIComponent(nullifierHash)}`,
+        );
+        const result = await response.json();
+        if (result.shortUrl) {
+          setShortUrl(result.shortUrl);
+        }
+      } catch (err) {
+        console.error("Failed to fetch short URL:", err);
+      }
+    };
+
     fetchData();
     fetchTwitterClaim();
+    fetchShortUrl();
   }, [nullifierHash]);
 
   const handleVerifyTwitter = async () => {
@@ -382,6 +401,32 @@ export default function HumanGraph() {
                 </div>
               </div>
             </div>
+
+            {/* Short URL for bio */}
+            {shortUrl && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-900 font-medium text-sm mb-1">
+                      Share your swarm
+                    </p>
+                    <p className="text-gray-600 font-mono text-sm">
+                      {shortUrl.replace('https://', '').replace('http://', '')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(shortUrl);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Twitter Verification CTA - only show for own swarm */}
             {isMySwarm && !twitterClaim?.claimed && (

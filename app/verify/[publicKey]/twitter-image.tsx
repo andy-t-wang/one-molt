@@ -1,5 +1,4 @@
 import { ImageResponse } from 'next/og'
-import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'edge'
 export const alt = 'Verified Molt on OneMolt'
@@ -9,62 +8,7 @@ export const size = {
 }
 export const contentType = 'image/png'
 
-interface Props {
-  params: Promise<{ publicKey: string }>
-}
-
-export default async function Image({ params }: Props) {
-  const { publicKey } = await params
-  const decodedKey = decodeURIComponent(publicKey)
-
-  // Query database directly for Twitter images (more reliable than HTTP fetch in edge)
-  let swarmCount = 1
-  let verificationLevel = 'face'
-  let isVerified = false
-
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (supabaseUrl && supabaseKey) {
-      const supabase = createClient(supabaseUrl, supabaseKey)
-
-      // Look up by public key
-      const { data: registration } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('public_key', decodedKey)
-        .eq('verified', true)
-        .eq('active', true)
-        .single()
-
-      if (registration) {
-        isVerified = true
-        verificationLevel = registration.verification_level || 'face'
-
-        // Get swarm count
-        if (registration.nullifier_hash) {
-          const { data: swarmMolts } = await supabase
-            .from('registrations')
-            .select('id')
-            .eq('nullifier_hash', registration.nullifier_hash)
-            .eq('verified', true)
-            .eq('active', true)
-
-          if (swarmMolts) {
-            swarmCount = swarmMolts.length
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Failed to fetch molt data for Twitter image:', error)
-  }
-
-  const truncatedKey = decodedKey.length > 24
-    ? `${decodedKey.slice(0, 12)}...${decodedKey.slice(-12)}`
-    : decodedKey
-
+export default function Image() {
   return new ImageResponse(
     (
       <div
@@ -112,133 +56,47 @@ export default async function Image({ params }: Props) {
           </span>
         </div>
 
-        {isVerified ? (
+        {/* Verified check */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '24px',
+          }}
+        >
           <div
             style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: '#22c55e',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {/* Verified check */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                marginBottom: '24px',
-              }}
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <div
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22c55e',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M9 12l2 2 4-4" />
-                </svg>
-              </div>
-              <span style={{ fontSize: '48px', fontWeight: 'bold', color: '#ffffff' }}>
-                Verified Molt
-              </span>
-            </div>
-
-            <div style={{ fontSize: '24px', color: '#9ca3af', marginBottom: '40px' }}>
-              Operated by a verified unique human
-            </div>
-
-            {/* Stats row */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '32px',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '16px 32px',
-                  backgroundColor: '#1f2937',
-                  borderRadius: '12px',
-                  border: '2px solid #374151',
-                }}
-              >
-                <span style={{ fontSize: '20px', color: '#9ca3af' }}>Level:</span>
-                <span
-                  style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: verificationLevel === 'face' ? '#22c55e' : '#3b82f6',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {verificationLevel}
-                </span>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '16px 32px',
-                  backgroundColor: '#1f2937',
-                  borderRadius: '12px',
-                  border: '2px solid #374151',
-                }}
-              >
-                <span style={{ fontSize: '20px', color: '#9ca3af' }}>Swarm:</span>
-                <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>
-                  {swarmCount} {swarmCount === 1 ? 'molt' : 'molts'}
-                </span>
-              </div>
-            </div>
-
-            {/* Public key */}
-            <div
-              style={{
-                marginTop: '32px',
-                fontSize: '16px',
-                color: '#6b7280',
-                fontFamily: 'monospace',
-              }}
-            >
-              {truncatedKey}
-            </div>
+              <path d="M9 12l2 2 4-4" />
+            </svg>
           </div>
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#fbbf24', marginBottom: '16px' }}>
-              Not Verified
-            </div>
-            <div style={{ fontSize: '24px', color: '#9ca3af' }}>
-              This molt is not registered with OneMolt
-            </div>
-          </div>
-        )}
+          <span style={{ fontSize: '48px', fontWeight: 'bold', color: '#ffffff' }}>
+            Verified Molt
+          </span>
+        </div>
+
+        <div style={{ fontSize: '24px', color: '#9ca3af' }}>
+          This AI agent is operated by a verified human
+        </div>
       </div>
     ),
     {

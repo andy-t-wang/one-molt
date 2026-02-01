@@ -47,6 +47,23 @@ function notifyNullifierChange() {
   nullifierListeners.forEach((l) => l());
 }
 
+// Generate verification code from nullifier (must match server-side algo)
+async function generateVerificationCode(nullifierHash: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const secret = 'onemolt-twitter-claim'; // Must match server
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(nullifierHash));
+  const hashArray = Array.from(new Uint8Array(signature));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.slice(0, 8).toUpperCase();
+}
+
 export default function RegisterPage({ params }: PageProps) {
   const { sessionToken } = use(params);
   const [status, setStatus] = useState<RegistrationStatus>("loading");
@@ -62,6 +79,12 @@ export default function RegisterPage({ params }: PageProps) {
     registeredAt: string;
   } | null>(null);
   const [pendingProof, setPendingProof] = useState<ISuccessResult | null>(null);
+
+  // Twitter claim flow state
+  const [twitterStep, setTwitterStep] = useState<'idle' | 'tweeted' | 'claiming' | 'claimed'>('idle');
+  const [tweetUrl, setTweetUrl] = useState('');
+  const [twitterHandle, setTwitterHandle] = useState<string | null>(null);
+  const [twitterError, setTwitterError] = useState<string | null>(null);
 
   const cachedNullifier = useSyncExternalStore(
     subscribeToNullifier,
@@ -360,32 +383,96 @@ export default function RegisterPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Share on Twitter */}
-          {registration && registration.publicKey && (
+          {/* Share & Claim Twitter */}
+          {registration && registration.publicKey && cachedNullifier && (
             <div className="mb-6">
-              <button
-                onClick={() => {
-                  const verifyUrl = `${window.location.origin}/verify/${encodeURIComponent(registration.publicKey)}`;
-                  const text = encodeURIComponent(
-                    "My AI agent is now verified as human-operated with OneMolt + World ID! 🤖✓ #OneMolt",
-                  );
-                  const url = encodeURIComponent(verifyUrl);
-                  window.open(
-                    `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
-                    "_blank",
-                  );
-                }}
-                className="w-full bg-[#1DA1F2] text-white py-3 px-4 rounded-md hover:bg-[#1a8cd8] transition-colors flex items-center justify-center gap-2 font-medium"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
+              {twitterStep === 'claimed' ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                  <p className="text-green-700 font-medium">
+                    Twitter verified: @{twitterHandle}
+                  </p>
+                </div>
+              ) : twitterStep === 'tweeted' || twitterStep === 'claiming' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 text-center">
+                    Paste your tweet URL to verify your Twitter account:
+                  </p>
+                  <input
+                    type="text"
+                    value={tweetUrl}
+                    onChange={(e) => setTweetUrl(e.target.value)}
+                    placeholder="https://twitter.com/you/status/..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  {twitterError && (
+                    <p className="text-red-500 text-xs">{twitterError}</p>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (!tweetUrl.trim()) return;
+                      setTwitterStep('claiming');
+                      setTwitterError(null);
+                      try {
+                        const res = await fetch('/api/v1/claim-twitter', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            nullifierHash: cachedNullifier,
+                            tweetUrl: tweetUrl.trim(),
+                          }),
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                          setTwitterHandle(data.twitterHandle);
+                          setTwitterStep('claimed');
+                        } else {
+                          setTwitterError(data.error || 'Failed to verify tweet');
+                          setTwitterStep('tweeted');
+                        }
+                      } catch {
+                        setTwitterError('Network error');
+                        setTwitterStep('tweeted');
+                      }
+                    }}
+                    disabled={twitterStep === 'claiming' || !tweetUrl.trim()}
+                    className="w-full bg-[#1DA1F2] text-white py-2 px-4 rounded-md hover:bg-[#1a8cd8] disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {twitterStep === 'claiming' ? 'Verifying...' : 'Verify Tweet'}
+                  </button>
+                  <button
+                    onClick={() => setTwitterStep('idle')}
+                    className="w-full text-gray-500 text-sm hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={async () => {
+                    const code = await generateVerificationCode(cachedNullifier);
+                    const verifyUrl = `${window.location.origin}/verify/${encodeURIComponent(registration.publicKey)}`;
+                    const text = encodeURIComponent(
+                      `My AI agent is verified as human-operated! 🦞 ${code}\n\n#OneMolt`,
+                    );
+                    const url = encodeURIComponent(verifyUrl);
+                    window.open(
+                      `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+                      "_blank",
+                    );
+                    setTwitterStep('tweeted');
+                  }}
+                  className="w-full bg-[#1DA1F2] text-white py-3 px-4 rounded-md hover:bg-[#1a8cd8] transition-colors flex items-center justify-center gap-2 font-medium"
                 >
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                </svg>
-                Share on Twitter
-              </button>
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                  </svg>
+                  Share & Verify Twitter
+                </button>
+              )}
             </div>
           )}
 
