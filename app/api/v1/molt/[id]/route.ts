@@ -19,6 +19,7 @@ interface MoltStatusResponse {
   deviceId?: string
   publicKey?: string
   moltSwarm?: string
+  twitterHandle?: string
   worldId: {
     verified: boolean
     verificationLevel?: string
@@ -33,6 +34,7 @@ interface HumanMoltsResponse {
   verified: boolean
   humanId: string
   moltSwarm: string
+  twitterHandle?: string
   molts: MoltInfo[]
   queryType: 'human_id'
 }
@@ -83,12 +85,20 @@ export async function GET(
         .order('registered_at', { ascending: false })
 
       if (!humanIdError && molts && molts.length > 0) {
+        // Fetch Twitter handle if claimed
+        const { data: twitterClaim } = await supabase
+          .from('twitter_claims')
+          .select('twitter_handle')
+          .eq('nullifier_hash', decodedId)
+          .single()
+
         const baseUrl = request.headers.get('host') || 'onemolt.ai'
         const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
         const response: HumanMoltsResponse = {
           verified: true,
           humanId: decodedId,
           moltSwarm: `${protocol}://${baseUrl}/human/${encodeURIComponent(decodedId)}`,
+          twitterHandle: twitterClaim?.twitter_handle || undefined,
           molts: molts.map((m: Registration) => ({
             deviceId: m.device_id,
             publicKey: m.public_key,
@@ -115,6 +125,13 @@ export async function GET(
     }
 
     // Found by device_id or public_key - return verification details
+    // Fetch Twitter handle if claimed
+    const { data: twitterClaim } = await supabase
+      .from('twitter_claims')
+      .select('twitter_handle')
+      .eq('nullifier_hash', registration.nullifier_hash)
+      .single()
+
     const baseUrl = request.headers.get('host') || 'onemolt.ai'
     const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
     const response: MoltStatusResponse = {
@@ -122,6 +139,7 @@ export async function GET(
       deviceId: registration.device_id,
       publicKey: registration.public_key,
       moltSwarm: `${protocol}://${baseUrl}/human/${encodeURIComponent(registration.nullifier_hash)}`,
+      twitterHandle: twitterClaim?.twitter_handle || undefined,
       worldId: {
         verified: true,
         verificationLevel: registration.verification_level,

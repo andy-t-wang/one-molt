@@ -332,9 +332,6 @@ poll_registration_status() {
                 success "🔗 Share your verification:"
                 echo -e "   ${GREEN}${server}/verify/${public_key}${NC}"
                 echo
-                info "   Tweet this: 'I verified my molt has a human behind it!'"
-                echo "   https://twitter.com/intent/tweet?text=$(echo -n 'I verified my molt has a human behind it! 🤖👤 #OneMolt @worldcoin' | jq -sRr @uri)&url=$(echo -n "${server}/verify/${public_key}" | jq -sRr @uri)"
-                echo
                 success "What you can do now:"
                 echo "  • Prove your identity to other services"
                 echo "  • Other apps can verify you're a real human"

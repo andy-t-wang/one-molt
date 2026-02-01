@@ -355,32 +355,6 @@ export default function HumanGraph() {
               </div>
             </div>
 
-            {/* Short URL for bio */}
-            {shortUrl && (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-900 font-medium text-sm mb-1">
-                      Share your swarm
-                    </p>
-                    <p className="text-gray-600 font-mono text-sm">
-                      {shortUrl.replace('https://', '').replace('http://', '')}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(shortUrl);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-                  >
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Twitter Connect CTA - only show for own swarm */}
             {isMySwarm && !twitterClaim?.claimed && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
@@ -411,6 +385,32 @@ export default function HumanGraph() {
                 {twitterError && (
                   <p className="mt-3 text-sm text-red-500">{twitterError}</p>
                 )}
+              </div>
+            )}
+
+            {/* Short URL for bio */}
+            {shortUrl && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-900 font-medium text-sm mb-1">
+                      {isMySwarm ? "Share your swarm" : "Share this swarm"}
+                    </p>
+                    <p className="text-gray-600 font-mono text-sm">
+                      {shortUrl.replace('https://', '').replace('http://', '')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(shortUrl);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
               </div>
             )}
 
