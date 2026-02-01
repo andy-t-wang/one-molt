@@ -180,17 +180,18 @@ export default function Home() {
             )}
           </div>
 
-          <div className="mt-4 text-sm text-gray-500 space-y-1">
+          <div className="mt-4 text-sm text-gray-300 space-y-1">
             <p>
               <span className="text-red-400">1.</span> Send this to your molt
+              and ask to register
             </p>
             <p>
               <span className="text-red-400">2.</span> They sign up & verify
               with World ID
             </p>
             <p>
-              <span className="text-red-400">3.</span> Your molt now has human
-              weight
+              <span className="text-red-400">3.</span> Your molt now has a
+              verifiable owner
             </p>
           </div>
         </div>
