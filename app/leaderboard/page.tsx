@@ -69,29 +69,12 @@ export default function Leaderboard() {
     fetchData();
   }, []);
 
-  const handleConnectTwitter = async () => {
+  const handleConnectTwitter = () => {
     if (!myNullifier) return;
     setTwitterError(null);
     setTwitterLoading(true);
-
-    try {
-      const response = await fetch(
-        `/api/auth/twitter?nullifier=${encodeURIComponent(myNullifier)}`,
-      );
-      const result = await response.json();
-
-      if (result.authUrl) {
-        // Redirect to Twitter OAuth
-        window.location.href = result.authUrl;
-      } else {
-        setTwitterError(result.error || "Failed to start Twitter connection");
-      }
-    } catch (err) {
-      setTwitterError("Failed to connect to Twitter");
-      console.error(err);
-    } finally {
-      setTwitterLoading(false);
-    }
+    // Direct navigation - server will redirect to Twitter
+    window.location.href = `/api/auth/twitter?nullifier=${encodeURIComponent(myNullifier)}`;
   };
 
   const truncateHash = (hash: string, length: number = 8) => {

@@ -11,13 +11,28 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state')
     const error = searchParams.get('error')
 
-    // Handle user denial
+    // Handle user denial or error
     if (error) {
+      console.error('X OAuth error:', error)
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=denied', request.url))
     }
 
     if (!code || !state) {
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=missing_params', request.url))
+    }
+
+    // Get PKCE code verifier and stored state from cookies
+    const storedState = request.cookies.get('oauth_state')?.value
+    const codeVerifier = request.cookies.get('oauth_verifier')?.value
+    const nullifierHash = request.cookies.get('oauth_nullifier')?.value
+
+    if (!codeVerifier || !storedState || storedState !== state) {
+      console.error('Invalid state or missing verifier:', { storedState, state, hasVerifier: !!codeVerifier })
+      return NextResponse.redirect(new URL('/leaderboard?twitter_error=invalid_state', request.url))
+    }
+
+    if (!nullifierHash) {
+      return NextResponse.redirect(new URL('/leaderboard?twitter_error=missing_nullifier', request.url))
     }
 
     const clientId = process.env.TWITTER_CLIENT_ID
@@ -27,53 +42,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=not_configured', request.url))
     }
 
-    const supabase = getSupabaseAdmin()
-
-    // Look up OAuth state
-    const { data: oauthState } = await supabase
-      .from('twitter_oauth_states')
-      .select('*')
-      .eq('state', state)
-      .single()
-
-    if (!oauthState) {
-      return NextResponse.redirect(new URL('/leaderboard?twitter_error=invalid_state', request.url))
-    }
-
-    // Check expiration
-    if (new Date(oauthState.expires_at) < new Date()) {
-      await supabase.from('twitter_oauth_states').delete().eq('state', state)
-      return NextResponse.redirect(new URL('/leaderboard?twitter_error=expired', request.url))
-    }
-
-    // Exchange code for token - always use non-www for consistency
+    // Build redirect URI (must match exactly)
     let baseUrl = request.headers.get('host') || 'onemolt.ai'
-    baseUrl = baseUrl.replace(/^www\./, '') // Strip www. prefix
+    baseUrl = baseUrl.replace(/^www\./, '')
     const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
     const redirectUri = `${protocol}://${baseUrl}/api/auth/twitter/callback`
+
+    // Exchange code for access token
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
 
     const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        'Authorization': `Basic ${credentials}`,
       },
       body: new URLSearchParams({
-        code,
         grant_type: 'authorization_code',
+        code: code,
         redirect_uri: redirectUri,
-        code_verifier: oauthState.code_verifier,
+        code_verifier: codeVerifier,
       }),
     })
 
     if (!tokenResponse.ok) {
-      console.error('Token exchange failed:', await tokenResponse.text())
+      const errorData = await tokenResponse.text()
+      console.error('Token exchange failed:', tokenResponse.status, errorData)
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=token_failed', request.url))
     }
 
     const tokenData = await tokenResponse.json()
 
-    // Get user info
+    // Get user information
     const userResponse = await fetch('https://api.twitter.com/2/users/me', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
@@ -88,6 +88,8 @@ export async function GET(request: NextRequest) {
     const userData = await userResponse.json()
     const twitterHandle = userData.data.username
 
+    const supabase = getSupabaseAdmin()
+
     // Check if this Twitter handle is already claimed by someone else
     const { data: existingClaim } = await supabase
       .from('twitter_claims')
@@ -95,7 +97,7 @@ export async function GET(request: NextRequest) {
       .eq('twitter_handle', twitterHandle.toLowerCase())
       .single()
 
-    if (existingClaim && existingClaim.nullifier_hash !== oauthState.nullifier_hash) {
+    if (existingClaim && existingClaim.nullifier_hash !== nullifierHash) {
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=already_claimed', request.url))
     }
 
@@ -103,7 +105,7 @@ export async function GET(request: NextRequest) {
     await supabase
       .from('twitter_claims')
       .upsert({
-        nullifier_hash: oauthState.nullifier_hash,
+        nullifier_hash: nullifierHash,
         twitter_handle: twitterHandle.toLowerCase(),
         tweet_url: `https://twitter.com/${twitterHandle}`,
         verification_code: 'oauth',
@@ -112,15 +114,19 @@ export async function GET(request: NextRequest) {
         onConflict: 'nullifier_hash'
       })
 
-    // Clean up OAuth state
-    await supabase.from('twitter_oauth_states').delete().eq('state', state)
-
-    // Redirect to their swarm page
-    return NextResponse.redirect(
-      new URL(`/human/${encodeURIComponent(oauthState.nullifier_hash)}?twitter_connected=true`, request.url)
+    // Create response with redirect and clear cookies
+    const response = NextResponse.redirect(
+      new URL(`/human/${encodeURIComponent(nullifierHash)}?twitter_connected=true`, request.url)
     )
+
+    // Clear the OAuth cookies
+    response.cookies.delete('oauth_state')
+    response.cookies.delete('oauth_verifier')
+    response.cookies.delete('oauth_nullifier')
+
+    return response
   } catch (error) {
-    console.error('Twitter OAuth callback error:', error)
+    console.error('X OAuth callback error:', error)
     return NextResponse.redirect(new URL('/leaderboard?twitter_error=internal', request.url))
   }
 }

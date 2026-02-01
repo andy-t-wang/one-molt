@@ -2,17 +2,16 @@
 // Initiates Twitter OAuth 2.0 flow with PKCE
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '@/lib/supabase'
 import crypto from 'crypto'
 
 // Generate PKCE code verifier and challenge
-function generatePKCE() {
-  const verifier = crypto.randomBytes(32).toString('base64url')
-  const challenge = crypto
+function generateCodeChallenge() {
+  const codeVerifier = crypto.randomBytes(32).toString('base64url')
+  const codeChallenge = crypto
     .createHash('sha256')
-    .update(verifier)
+    .update(codeVerifier)
     .digest('base64url')
-  return { verifier, challenge }
+  return { codeVerifier, codeChallenge }
 }
 
 export async function GET(request: NextRequest) {
@@ -21,78 +20,64 @@ export async function GET(request: NextRequest) {
     const nullifierHash = searchParams.get('nullifier')
 
     if (!nullifierHash) {
-      return NextResponse.json(
-        { error: 'Missing nullifier parameter' },
-        { status: 400 }
-      )
+      return NextResponse.redirect(new URL('/?error=missing_nullifier', request.url))
     }
 
     const clientId = process.env.TWITTER_CLIENT_ID
     if (!clientId) {
-      return NextResponse.json(
-        { error: 'Twitter OAuth not configured' },
-        { status: 500 }
-      )
+      return NextResponse.redirect(new URL('/?error=twitter_not_configured', request.url))
     }
 
-    const supabase = getSupabaseAdmin()
+    // Generate PKCE codes
+    const { codeVerifier, codeChallenge } = generateCodeChallenge()
+    const state = crypto.randomBytes(32).toString('hex')
 
-    // Verify this nullifier exists
-    const { data: registration } = await supabase
-      .from('registrations')
-      .select('nullifier_hash')
-      .eq('nullifier_hash', nullifierHash)
-      .eq('verified', true)
-      .eq('active', true)
-      .single()
-
-    if (!registration) {
-      return NextResponse.json(
-        { error: 'Nullifier not found' },
-        { status: 404 }
-      )
-    }
-
-    // Generate PKCE and state
-    const { verifier, challenge } = generatePKCE()
-    const state = crypto.randomBytes(16).toString('hex')
-
-    // Store OAuth state in database
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-    await supabase
-      .from('twitter_oauth_states')
-      .upsert({
-        state,
-        nullifier_hash: nullifierHash,
-        code_verifier: verifier,
-        expires_at: expiresAt.toISOString(),
-      }, {
-        onConflict: 'nullifier_hash'
-      })
-
-    // Build Twitter OAuth URL - always use non-www for consistency
+    // Build redirect URI
     let baseUrl = request.headers.get('host') || 'onemolt.ai'
-    baseUrl = baseUrl.replace(/^www\./, '') // Strip www. prefix
+    baseUrl = baseUrl.replace(/^www\./, '')
     const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
     const redirectUri = `${protocol}://${baseUrl}/api/auth/twitter/callback`
 
+    // Twitter OAuth 2.0 authorization URL
     const authUrl = new URL('https://twitter.com/i/oauth2/authorize')
-    authUrl.searchParams.set('response_type', 'code')
-    authUrl.searchParams.set('client_id', clientId)
-    authUrl.searchParams.set('redirect_uri', redirectUri)
-    authUrl.searchParams.set('scope', 'users.read offline.access')
-    authUrl.searchParams.set('state', state)
-    authUrl.searchParams.set('code_challenge', challenge)
-    authUrl.searchParams.set('code_challenge_method', 'S256')
+    authUrl.searchParams.append('response_type', 'code')
+    authUrl.searchParams.append('client_id', clientId)
+    authUrl.searchParams.append('redirect_uri', redirectUri)
+    authUrl.searchParams.append('scope', 'tweet.read users.read')
+    authUrl.searchParams.append('state', state)
+    authUrl.searchParams.append('code_challenge', codeChallenge)
+    authUrl.searchParams.append('code_challenge_method', 'S256')
 
-    return NextResponse.json({
-      authUrl: authUrl.toString(),
+    // Create response with redirect
+    const response = NextResponse.redirect(authUrl.toString())
+
+    // Store PKCE code verifier, state, and nullifier in secure cookies
+    const isProduction = !baseUrl.includes('localhost')
+
+    response.cookies.set('oauth_state', state, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 10 * 60, // 10 minutes
     })
+
+    response.cookies.set('oauth_verifier', codeVerifier, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 10 * 60,
+    })
+
+    response.cookies.set('oauth_nullifier', nullifierHash, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 10 * 60,
+    })
+
+    return response
   } catch (error) {
-    console.error('Twitter OAuth init error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error starting X OAuth 2.0:', error)
+    return NextResponse.redirect(new URL('/?error=oauth_init_failed', request.url))
   }
 }

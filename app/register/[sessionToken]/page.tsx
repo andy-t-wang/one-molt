@@ -377,22 +377,11 @@ export default function RegisterPage({ params }: PageProps) {
               ) : (
                 <>
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       setTwitterStep('connecting');
                       setTwitterError(null);
-                      try {
-                        const res = await fetch(`/api/auth/twitter?nullifier=${encodeURIComponent(cachedNullifier)}`);
-                        const data = await res.json();
-                        if (data.authUrl) {
-                          window.location.href = data.authUrl;
-                        } else {
-                          setTwitterError(data.error || 'Failed to connect');
-                          setTwitterStep('idle');
-                        }
-                      } catch {
-                        setTwitterError('Network error');
-                        setTwitterStep('idle');
-                      }
+                      // Direct navigation - server will redirect to Twitter
+                      window.location.href = `/api/auth/twitter?nullifier=${encodeURIComponent(cachedNullifier)}`;
                     }}
                     disabled={twitterStep === 'connecting'}
                     className="w-full bg-gray-900 text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50"
