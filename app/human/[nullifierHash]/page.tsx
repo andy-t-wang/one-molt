@@ -36,10 +36,6 @@ export default function HumanGraph() {
 
   // Twitter verification state
   const [twitterClaim, setTwitterClaim] = useState<TwitterClaim | null>(null);
-  const [twitterStep, setTwitterStep] = useState<
-    "idle" | "tweeting" | "pasting"
-  >("idle");
-  const [tweetUrl, setTweetUrl] = useState("");
   const [twitterError, setTwitterError] = useState<string | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
 
@@ -107,61 +103,24 @@ export default function HumanGraph() {
     fetchShortUrl();
   }, [nullifierHash]);
 
-  const handleVerifyTwitter = async () => {
+  const handleConnectTwitter = async () => {
     setTwitterError(null);
     setTwitterLoading(true);
 
     try {
       const response = await fetch(
-        `/api/v1/claim-twitter?nullifier=${encodeURIComponent(nullifierHash)}&code=true`,
+        `/api/auth/twitter?nullifier=${encodeURIComponent(nullifierHash)}`,
       );
       const result = await response.json();
 
-      if (result.tweetIntentUrl) {
-        window.open(result.tweetIntentUrl, "_blank");
-        setTwitterStep("pasting");
+      if (result.authUrl) {
+        // Redirect to Twitter OAuth
+        window.location.href = result.authUrl;
       } else {
-        setTwitterError(result.error || "Failed to generate verification");
+        setTwitterError(result.error || "Failed to start Twitter connection");
       }
     } catch (err) {
-      setTwitterError("Failed to start verification");
-      console.error(err);
-    } finally {
-      setTwitterLoading(false);
-    }
-  };
-
-  const handleSubmitTweet = async () => {
-    if (!tweetUrl.trim()) return;
-
-    setTwitterError(null);
-    setTwitterLoading(true);
-
-    try {
-      const response = await fetch("/api/v1/claim-twitter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nullifierHash,
-          tweetUrl: tweetUrl.trim(),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setTwitterClaim({
-          claimed: true,
-          twitterHandle: result.twitterHandle,
-          claimedAt: new Date().toISOString(),
-        });
-        setTwitterStep("idle");
-        setTweetUrl("");
-      } else {
-        setTwitterError(result.error || "Failed to verify tweet");
-      }
-    } catch (err) {
-      setTwitterError("Failed to submit verification");
+      setTwitterError("Failed to connect to Twitter");
       console.error(err);
     } finally {
       setTwitterLoading(false);
@@ -422,70 +381,33 @@ export default function HumanGraph() {
               </div>
             )}
 
-            {/* Twitter Verification CTA - only show for own swarm */}
+            {/* Twitter Connect CTA - only show for own swarm */}
             {isMySwarm && !twitterClaim?.claimed && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
-                {twitterStep === "idle" && (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-900 font-medium mb-1">
-                        Link your Twitter
-                      </p>
-                      <p className="text-gray-500 text-sm">
-                        Show your handle on the swarm graph and leaderboard
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleVerifyTwitter}
-                      disabled={twitterLoading}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                      </svg>
-                      {twitterLoading ? "Loading..." : "Verify"}
-                    </button>
-                  </div>
-                )}
-
-                {twitterStep === "pasting" && (
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 mb-4">
-                      After tweeting, paste the tweet URL below:
+                    <p className="text-gray-900 font-medium mb-1">
+                      Connect your X account
                     </p>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={tweetUrl}
-                        onChange={(e) => setTweetUrl(e.target.value)}
-                        placeholder="https://twitter.com/you/status/123..."
-                        className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      />
-                      <button
-                        onClick={handleSubmitTweet}
-                        disabled={twitterLoading || !tweetUrl.trim()}
-                        className="px-6 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:bg-gray-300 transition-colors"
-                      >
-                        {twitterLoading ? "..." : "Verify"}
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setTwitterStep("idle");
-                        setTweetUrl("");
-                        setTwitterError(null);
-                      }}
-                      className="mt-3 text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Cancel
-                    </button>
+                    <p className="text-gray-500 text-sm">
+                      Show your handle on the swarm graph and leaderboard
+                    </p>
                   </div>
-                )}
-
+                  <button
+                    onClick={handleConnectTwitter}
+                    disabled={twitterLoading}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    {twitterLoading ? "Connecting..." : "Connect with X"}
+                  </button>
+                </div>
                 {twitterError && (
                   <p className="mt-3 text-sm text-red-500">{twitterError}</p>
                 )}
