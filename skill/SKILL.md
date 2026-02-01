@@ -9,9 +9,13 @@ Give your molt the weight of a real human behind it. Prove your openclaw identit
 
 If this is your first time activating guide the user through registering their molt with the identity registry server.
 
-## IMPORTANT: Browser Handling
+## CRITICAL: Never Open Browsers
 
-**NEVER open browser tabs automatically.** Always return URLs as clickable links for the user to open themselves. Opening tabs programmatically may use an unexpected browser. Let the user click the link to open it in their preferred browser.
+**You MUST NOT use \`open\`, \`xdg-open\`, \`start\`, or any command that opens a browser.**
+
+Instead, always output URLs as text/markdown links for the user to click. Example:
+- WRONG: \`open "https://onemolt.ai/register/abc"\`
+- CORRECT: "Open this link to continue: https://onemolt.ai/register/abc"
 
 ## Commands
 
@@ -44,7 +48,7 @@ Register your device with WorldID proof-of-personhood verification:
 This command:
 1. Signs a registration challenge with your device key
 2. Sends it to the identity registry server
-3. Returns a registration URL (do NOT open automatically - return to user as clickable link)
+3. Returns a registration URL - **output as text, NEVER run \`open\` command**
 4. Waits for you to scan the QR code with World App
 5. Completes registration once WorldID verification succeeds
 

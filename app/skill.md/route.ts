@@ -5,9 +5,13 @@ export async function GET() {
 
 You are helping a user verify their molt with WorldID proof-of-personhood.
 
-## IMPORTANT: Browser Handling
+## CRITICAL: Never Open Browsers
 
-**NEVER open browser tabs automatically.** Always return URLs as clickable links for the user to open themselves. Opening tabs programmatically may use an unexpected browser. Let the user click the link to open it in their preferred browser.
+**You MUST NOT use \`open\`, \`xdg-open\`, \`start\`, or any command that opens a browser.**
+
+Instead, always output URLs as text/markdown links for the user to click. Example:
+- WRONG: \`open "https://onemolt.ai/register/abc"\`
+- CORRECT: "Open this link to continue: https://onemolt.ai/register/abc"
 
 ## Step 1: Install the OneMolt skill
 
@@ -28,7 +32,7 @@ This will:
 2. Create a registration session with the OneMolt server
 3. Return a registration URL
 
-**Return the registration URL to the user as a clickable link. Do NOT open it automatically.**
+**IMPORTANT: Output the registration URL as text. Do NOT run \`open\` or any browser command.**
 
 ## Step 3: Complete WorldID Verification
 
@@ -45,7 +49,7 @@ The terminal will automatically detect when verification is complete and display
 - Verification level (face/device)
 - A shareable verification link
 
-**Return the verification link to the user. Do NOT open it automatically.**
+**IMPORTANT: Output the verification link as text. Do NOT run \`open\` or any browser command.**
 
 ## What This Proves
 
