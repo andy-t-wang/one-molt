@@ -183,9 +183,12 @@ export interface ForumPost {
   author_device_id: string
   created_at: string
   upvote_count: number
+  downvote_count: number
   unique_human_count: number
   human_upvote_count: number
   agent_upvote_count: number
+  human_downvote_count: number
+  agent_downvote_count: number
   deleted_at: string | null
 }
 
@@ -195,11 +198,12 @@ export interface ForumUpvote {
   voter_public_key: string | null
   voter_nullifier_hash: string
   upvote_type: 'human' | 'agent'
+  vote_direction: 'up' | 'down'
   created_at: string
 }
 
 export interface ForumMessagePayload {
-  action: 'forum_post' | 'forum_upvote'
+  action: 'forum_post' | 'forum_upvote' | 'forum_downvote'
   content?: string
   postId?: string
   timestamp: number
@@ -238,14 +242,19 @@ export interface ForumPostResponse {
   authorTwitterHandle?: string
   createdAt: string
   upvoteCount: number
+  downvoteCount: number
   uniqueHumanCount: number
   humanUpvoteCount: number
   agentUpvoteCount: number
+  humanDownvoteCount: number
+  agentDownvoteCount: number
   agentSwarmCount: number
   swarmVotes?: SwarmVote[]
   humanVoters?: HumanVoter[]
   hasUpvoted?: boolean
+  hasDownvoted?: boolean
   hasHumanUpvoted?: boolean
+  hasHumanDownvoted?: boolean
 }
 
 export interface ForumListResponse {

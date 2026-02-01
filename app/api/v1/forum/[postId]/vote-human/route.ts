@@ -1,5 +1,5 @@
-// POST /api/v1/forum/[postId]/upvote-human - Human upvote via WorldID orb verification
-// This is a convenience endpoint that calls vote-human with direction='up'
+// POST /api/v1/forum/[postId]/vote-human - Human vote via WorldID orb verification
+// Supports both upvote and downvote, allows switching vote direction
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
@@ -7,9 +7,10 @@ import { verifyWorldIDProof, isValidWorldIDProof } from '@/lib/worldid'
 import { updatePostCounts } from '@/lib/forum'
 import type { ForumPost, ApiError, WorldIDProof } from '@/lib/types'
 
-interface HumanUpvoteRequest {
+interface HumanVoteRequest {
   proof?: WorldIDProof
   nullifier?: string  // Can use cached nullifier if previously verified
+  direction: 'up' | 'down'
 }
 
 export async function POST(
@@ -18,7 +19,15 @@ export async function POST(
 ) {
   try {
     const { postId } = await params
-    const body: HumanUpvoteRequest = await request.json()
+    const body: HumanVoteRequest = await request.json()
+
+    // Validate direction
+    if (!body.direction || !['up', 'down'].includes(body.direction)) {
+      return NextResponse.json<ApiError>(
+        { error: 'Missing or invalid direction. Must be "up" or "down"' },
+        { status: 400 }
+      )
+    }
 
     const supabase = getSupabaseAdmin()
     let nullifierHash: string
@@ -36,7 +45,7 @@ export async function POST(
       // Require orb verification level
       if (body.proof.verification_level !== 'orb') {
         return NextResponse.json<ApiError>(
-          { error: 'Human upvotes require orb-level verification' },
+          { error: 'Human votes require orb-level verification' },
           { status: 400 }
         )
       }
@@ -79,10 +88,10 @@ export async function POST(
     // Check if post exists
     const { data: post, error: postError } = await supabase
       .from('forum_posts')
-      .select('id, upvote_count, downvote_count, human_upvote_count, human_downvote_count, agent_upvote_count')
+      .select('id, upvote_count, downvote_count, human_upvote_count, human_downvote_count, agent_upvote_count, agent_downvote_count')
       .eq('id', postId)
       .is('deleted_at', null)
-      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'downvote_count' | 'human_upvote_count' | 'human_downvote_count' | 'agent_upvote_count'>>()
+      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'downvote_count' | 'human_upvote_count' | 'human_downvote_count' | 'agent_upvote_count' | 'agent_downvote_count'>>()
 
     if (postError || !post) {
       return NextResponse.json<ApiError>(
@@ -106,18 +115,18 @@ export async function POST(
     let newHumanDownvoteCount = post.human_downvote_count
 
     if (existingVote) {
-      // Already voted - check if already upvoted
-      if (existingVote.vote_direction === 'up') {
+      // Already voted - check if same direction
+      if (existingVote.vote_direction === body.direction) {
         return NextResponse.json<ApiError>(
-          { error: 'Already upvoted this post' },
+          { error: `Already ${body.direction === 'up' ? 'upvoted' : 'downvoted'} this post` },
           { status: 409 }
         )
       }
 
-      // Switch from downvote to upvote
+      // Switch vote direction
       const { error: updateVoteError } = await supabase
         .from('forum_upvotes')
-        .update({ vote_direction: 'up' })
+        .update({ vote_direction: body.direction })
         .eq('id', existingVote.id)
 
       if (updateVoteError) {
@@ -128,13 +137,22 @@ export async function POST(
         )
       }
 
-      // Update counts (switching from down to up)
-      newUpvoteCount += 1
-      newDownvoteCount -= 1
-      newHumanUpvoteCount += 1
-      newHumanDownvoteCount -= 1
+      // Update counts (switch from one direction to another)
+      if (body.direction === 'up') {
+        // Switching from down to up
+        newUpvoteCount += 1
+        newDownvoteCount -= 1
+        newHumanUpvoteCount += 1
+        newHumanDownvoteCount -= 1
+      } else {
+        // Switching from up to down
+        newUpvoteCount -= 1
+        newDownvoteCount += 1
+        newHumanUpvoteCount -= 1
+        newHumanDownvoteCount += 1
+      }
     } else {
-      // New vote - insert as upvote
+      // New vote - insert
       const { error: insertError } = await supabase
         .from('forum_upvotes')
         .insert({
@@ -142,20 +160,25 @@ export async function POST(
           voter_public_key: null,
           voter_nullifier_hash: nullifierHash,
           upvote_type: 'human',
-          vote_direction: 'up',
+          vote_direction: body.direction,
         })
 
       if (insertError) {
-        console.error('Error inserting human upvote:', insertError)
+        console.error('Error inserting human vote:', insertError)
         return NextResponse.json<ApiError>(
-          { error: 'Failed to upvote' },
+          { error: 'Failed to vote' },
           { status: 500 }
         )
       }
 
-      // Update counts for new upvote
-      newUpvoteCount += 1
-      newHumanUpvoteCount += 1
+      // Update counts for new vote
+      if (body.direction === 'up') {
+        newUpvoteCount += 1
+        newHumanUpvoteCount += 1
+      } else {
+        newDownvoteCount += 1
+        newHumanDownvoteCount += 1
+      }
     }
 
     // Update post counts
@@ -177,15 +200,17 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      voteDirection: body.direction,
       upvoteCount: newUpvoteCount,
       downvoteCount: newDownvoteCount,
       humanUpvoteCount: newHumanUpvoteCount,
       humanDownvoteCount: newHumanDownvoteCount,
       agentUpvoteCount: post.agent_upvote_count,
+      agentDownvoteCount: post.agent_downvote_count,
       nullifierHash, // Return for client caching
     }, { status: 200 })
   } catch (error) {
-    console.error('Human upvote error:', error)
+    console.error('Human vote error:', error)
     return NextResponse.json<ApiError>(
       { error: 'Internal server error' },
       { status: 500 }

@@ -28,14 +28,19 @@ interface ForumPost {
   authorTwitterHandle?: string;
   createdAt: string;
   upvoteCount: number;
+  downvoteCount: number;
   uniqueHumanCount: number;
   humanUpvoteCount: number;
   agentUpvoteCount: number;
+  humanDownvoteCount: number;
+  agentDownvoteCount: number;
   agentSwarmCount: number;
   swarmVotes?: SwarmVote[];
   humanVoters?: HumanVoter[];
   hasUpvoted?: boolean;
+  hasDownvoted?: boolean;
   hasHumanUpvoted?: boolean;
+  hasHumanDownvoted?: boolean;
 }
 
 interface ForumResponse {
@@ -80,10 +85,11 @@ export default function Forum() {
   const [upvoteNullifier, setUpvoteNullifier] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOption>("recent");
   const [instructionsOpen, setInstructionsOpen] = useState(true);
-  const [pendingUpvotePostId, setPendingUpvotePostId] = useState<string | null>(
-    null,
-  );
-  const [upvotingPostId, setUpvotingPostId] = useState<string | null>(null);
+  const [pendingVote, setPendingVote] = useState<{
+    postId: string;
+    direction: "up" | "down";
+  } | null>(null);
+  const [votingPostId, setVotingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     const cached = localStorage.getItem("onemolt_nullifier");
@@ -123,18 +129,19 @@ export default function Forum() {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Handle WorldID verification success for upvoting
-  const handleUpvoteVerify = async (result: ISuccessResult) => {
-    if (!pendingUpvotePostId) return;
+  // Handle WorldID verification success for voting
+  const handleVoteVerify = async (result: ISuccessResult) => {
+    if (!pendingVote) return;
 
-    setUpvotingPostId(pendingUpvotePostId);
+    setVotingPostId(pendingVote.postId);
     try {
       const response = await fetch(
-        `/api/v1/forum/${pendingUpvotePostId}/upvote-human`,
+        `/api/v1/forum/${pendingVote.postId}/vote-human`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            direction: pendingVote.direction,
             proof: {
               proof: result.proof,
               merkle_root: result.merkle_root,
@@ -148,47 +155,50 @@ export default function Forum() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Cache the nullifier for future upvotes
+        // Cache the nullifier for future votes
         localStorage.setItem(UPVOTE_NULLIFIER_KEY, result.nullifier_hash);
         setUpvoteNullifier(result.nullifier_hash);
 
         // Update the post in state
         setPosts((prev) =>
           prev.map((p) =>
-            p.id === pendingUpvotePostId
+            p.id === pendingVote.postId
               ? {
                   ...p,
                   upvoteCount: data.upvoteCount,
+                  downvoteCount: data.downvoteCount,
                   humanUpvoteCount: data.humanUpvoteCount,
+                  humanDownvoteCount: data.humanDownvoteCount,
                   agentUpvoteCount: data.agentUpvoteCount,
-                  hasHumanUpvoted: true,
+                  hasHumanUpvoted: pendingVote.direction === "up",
+                  hasHumanDownvoted: pendingVote.direction === "down",
                 }
               : p,
           ),
         );
       } else {
-        console.error("Upvote failed:", data.error);
-        alert(data.error || "Failed to upvote");
+        console.error("Vote failed:", data.error);
+        alert(data.error || "Failed to vote");
       }
     } catch (err) {
-      console.error("Upvote error:", err);
-      alert("Failed to upvote");
+      console.error("Vote error:", err);
+      alert("Failed to vote");
     } finally {
-      setUpvotingPostId(null);
-      setPendingUpvotePostId(null);
+      setVotingPostId(null);
+      setPendingVote(null);
     }
   };
 
-  // Handle upvote with cached nullifier (no re-verification needed)
-  const handleCachedUpvote = async (postId: string) => {
+  // Handle vote with cached nullifier (no re-verification needed)
+  const handleCachedVote = async (postId: string, direction: "up" | "down") => {
     if (!upvoteNullifier) return;
 
-    setUpvotingPostId(postId);
+    setVotingPostId(postId);
     try {
-      const response = await fetch(`/api/v1/forum/${postId}/upvote-human`, {
+      const response = await fetch(`/api/v1/forum/${postId}/vote-human`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nullifier: upvoteNullifier }),
+        body: JSON.stringify({ nullifier: upvoteNullifier, direction }),
       });
 
       const data = await response.json();
@@ -201,38 +211,41 @@ export default function Forum() {
               ? {
                   ...p,
                   upvoteCount: data.upvoteCount,
+                  downvoteCount: data.downvoteCount,
                   humanUpvoteCount: data.humanUpvoteCount,
+                  humanDownvoteCount: data.humanDownvoteCount,
                   agentUpvoteCount: data.agentUpvoteCount,
-                  hasHumanUpvoted: true,
+                  hasHumanUpvoted: direction === "up",
+                  hasHumanDownvoted: direction === "down",
                 }
               : p,
           ),
         );
       } else {
-        console.error("Upvote failed:", data.error);
+        console.error("Vote failed:", data.error);
         // If nullifier not recognized, clear cache and require fresh verification
         if (response.status === 401) {
           localStorage.removeItem(UPVOTE_NULLIFIER_KEY);
           setUpvoteNullifier(null);
-          setPendingUpvotePostId(postId); // Trigger WorldID verification
+          setPendingVote({ postId, direction }); // Trigger WorldID verification
         } else {
-          alert(data.error || "Failed to upvote");
+          alert(data.error || "Failed to vote");
         }
       }
     } catch (err) {
-      console.error("Upvote error:", err);
-      alert("Failed to upvote");
+      console.error("Vote error:", err);
+      alert("Failed to vote");
     } finally {
-      setUpvotingPostId(null);
+      setVotingPostId(null);
     }
   };
 
-  // Handle upvote click - use cached nullifier if available, otherwise verify
-  const handleUpvoteClick = (postId: string) => {
+  // Handle vote click - use cached nullifier if available, otherwise verify
+  const handleVoteClick = (postId: string, direction: "up" | "down") => {
     if (upvoteNullifier) {
-      handleCachedUpvote(postId);
+      handleCachedVote(postId, direction);
     } else {
-      setPendingUpvotePostId(postId);
+      setPendingVote({ postId, direction });
     }
   };
 
@@ -375,16 +388,16 @@ export default function Forum() {
           </button>
         </div>
 
-        {/* IDKit widget for upvoting - only shown when user needs to verify */}
-        {!upvoteNullifier && pendingUpvotePostId && (
+        {/* IDKit widget for voting - only shown when user needs to verify */}
+        {!upvoteNullifier && pendingVote && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Verify to Upvote
+                  Verify to {pendingVote.direction === "up" ? "Upvote" : "Downvote"}
                 </h3>
                 <button
-                  onClick={() => setPendingUpvotePostId(null)}
+                  onClick={() => setPendingVote(null)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg
@@ -403,7 +416,7 @@ export default function Forum() {
                 </button>
               </div>
               <p className="text-gray-600 mb-6">
-                Verify with WorldID orb to upvote as a verified human. You only
+                Verify with WorldID orb to vote as a verified human. You only
                 need to do this once.
               </p>
               <IDKitWidget
@@ -413,10 +426,10 @@ export default function Forum() {
                 }
                 action={process.env.NEXT_PUBLIC_WORLDID_ACTION || ""}
                 verification_level={"orb" as VerificationLevel}
-                onSuccess={handleUpvoteVerify}
+                onSuccess={handleVoteVerify}
                 onError={(error) => {
                   console.error("WorldID widget error:", error);
-                  setPendingUpvotePostId(null);
+                  setPendingVote(null);
                 }}
               >
                 {({ open }) => (
@@ -474,8 +487,9 @@ export default function Forum() {
                 post={post}
                 isMyPost={myNullifier === post.authorNullifierHash}
                 hasHumanUpvoted={post.hasHumanUpvoted || false}
-                isUpvoting={upvotingPostId === post.id}
-                onUpvote={() => handleUpvoteClick(post.id)}
+                hasHumanDownvoted={post.hasHumanDownvoted || false}
+                isVoting={votingPostId === post.id}
+                onVote={(direction) => handleVoteClick(post.id, direction)}
                 truncateKey={truncateKey}
                 formatDate={formatDate}
               />
@@ -534,20 +548,25 @@ function PostCard({
   post,
   isMyPost,
   hasHumanUpvoted,
-  isUpvoting,
-  onUpvote,
+  hasHumanDownvoted,
+  isVoting,
+  onVote,
   truncateKey,
   formatDate,
 }: {
   post: ForumPost;
   isMyPost: boolean;
   hasHumanUpvoted: boolean;
-  isUpvoting: boolean;
-  onUpvote: () => void;
+  hasHumanDownvoted: boolean;
+  isVoting: boolean;
+  onVote: (direction: "up" | "down") => void;
   truncateKey: (key: string, length?: number) => string;
   formatDate: (date: string) => string;
 }) {
   const [expanded, setExpanded] = useState(false);
+
+  // Calculate net score
+  const netScore = post.upvoteCount - (post.downvoteCount || 0);
 
   return (
     <div
@@ -555,15 +574,16 @@ function PostCard({
         isMyPost ? "border-red-200 bg-red-50/30" : "border-gray-200"
       }`}
     >
-      {/* Reddit-style upvote column */}
+      {/* Reddit-style vote column */}
       <div className="flex flex-col items-center py-4 px-3 bg-gray-100/50 rounded-l-xl">
+        {/* Upvote button */}
         <button
-          onClick={onUpvote}
-          disabled={hasHumanUpvoted || isUpvoting}
+          onClick={() => onVote("up")}
+          disabled={hasHumanUpvoted || isVoting}
           className={`p-1 rounded transition-colors ${
             hasHumanUpvoted
               ? "text-red-500"
-              : isUpvoting
+              : isVoting
                 ? "text-gray-300"
                 : "text-gray-400 hover:text-red-500 hover:bg-red-50"
           }`}
@@ -588,14 +608,50 @@ function PostCard({
           </svg>
         </button>
 
-        {/* Upvote Count */}
+        {/* Net Score */}
         <span
           className={`text-lg font-bold ${
-            hasHumanUpvoted ? "text-red-500" : "text-gray-700"
+            hasHumanUpvoted
+              ? "text-red-500"
+              : hasHumanDownvoted
+                ? "text-blue-500"
+                : "text-gray-700"
           }`}
         >
-          {post.upvoteCount}
+          {netScore}
         </span>
+
+        {/* Downvote button */}
+        <button
+          onClick={() => onVote("down")}
+          disabled={hasHumanDownvoted || isVoting}
+          className={`p-1 rounded transition-colors ${
+            hasHumanDownvoted
+              ? "text-blue-500"
+              : isVoting
+                ? "text-gray-300"
+                : "text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+          }`}
+          title={
+            hasHumanDownvoted
+              ? "You've downvoted this post"
+              : "Downvote with WorldID orb verification"
+          }
+        >
+          <svg
+            className="w-6 h-6"
+            fill={hasHumanDownvoted ? "currentColor" : "none"}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
 
         {/* Abbreviated breakdown */}
         <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1">
@@ -711,8 +767,8 @@ function PostCard({
                               @{voter.twitterHandle}
                             </span>
                           ) : (
-                            <span className="font-mono text-xs text-gray-600">
-                              {truncateKey(voter.nullifierHash, 6)}
+                            <span className="text-gray-600">
+                              Anonymous Verified Human
                             </span>
                           )}
                         </Link>
@@ -766,8 +822,8 @@ function PostCard({
                                 @{swarm.twitterHandle}
                               </span>
                             ) : (
-                              <span className="font-mono text-xs text-gray-600">
-                                {truncateKey(swarm.nullifierHash, 6)}
+                              <span className="text-sm text-gray-600">
+                                Anonymous Swarm Leader
                               </span>
                             )}
                           </div>

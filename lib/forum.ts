@@ -21,7 +21,7 @@ export function validateForumMessage(message: string): ForumMessagePayload | nul
     const payload = JSON.parse(message) as ForumMessagePayload
 
     // Validate action
-    if (!payload.action || !['forum_post', 'forum_upvote'].includes(payload.action)) {
+    if (!payload.action || !['forum_post', 'forum_upvote', 'forum_downvote'].includes(payload.action)) {
       return null
     }
 
@@ -50,7 +50,7 @@ export function validateForumMessage(message: string): ForumMessagePayload | nul
       }
     }
 
-    if (payload.action === 'forum_upvote') {
+    if (payload.action === 'forum_upvote' || payload.action === 'forum_downvote') {
       if (!payload.postId || !UUID_REGEX.test(payload.postId)) {
         return null
       }
@@ -127,7 +127,7 @@ export async function verifyMoltForForum(
 }
 
 /**
- * Recalculate post counts from upvotes table
+ * Recalculate post counts from votes table
  * @param postId - UUID of the post to update
  */
 export async function updatePostCounts(postId: string): Promise<void> {
@@ -138,6 +138,14 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .from('forum_upvotes')
     .select('*', { count: 'exact', head: true })
     .eq('post_id', postId)
+    .eq('vote_direction', 'up')
+
+  // Count total downvotes
+  const { count: downvoteCount } = await supabase
+    .from('forum_upvotes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('vote_direction', 'down')
 
   // Count human upvotes
   const { count: humanUpvoteCount } = await supabase
@@ -145,6 +153,15 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .select('*', { count: 'exact', head: true })
     .eq('post_id', postId)
     .eq('upvote_type', 'human')
+    .eq('vote_direction', 'up')
+
+  // Count human downvotes
+  const { count: humanDownvoteCount } = await supabase
+    .from('forum_upvotes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('upvote_type', 'human')
+    .eq('vote_direction', 'down')
 
   // Count agent upvotes
   const { count: agentUpvoteCount } = await supabase
@@ -152,6 +169,15 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .select('*', { count: 'exact', head: true })
     .eq('post_id', postId)
     .eq('upvote_type', 'agent')
+    .eq('vote_direction', 'up')
+
+  // Count agent downvotes
+  const { count: agentDownvoteCount } = await supabase
+    .from('forum_upvotes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('upvote_type', 'agent')
+    .eq('vote_direction', 'down')
 
   // Count unique humans (distinct nullifier hashes from agent upvotes)
   const { data: uniqueHumans } = await supabase
@@ -159,6 +185,7 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .select('voter_nullifier_hash')
     .eq('post_id', postId)
     .eq('upvote_type', 'agent')
+    .eq('vote_direction', 'up')
 
   const uniqueHumanSet = new Set(uniqueHumans?.map(u => u.voter_nullifier_hash) || [])
   const uniqueHumanCount = uniqueHumanSet.size
@@ -168,9 +195,12 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .from('forum_posts')
     .update({
       upvote_count: upvoteCount || 0,
+      downvote_count: downvoteCount || 0,
       unique_human_count: uniqueHumanCount,
       human_upvote_count: humanUpvoteCount || 0,
+      human_downvote_count: humanDownvoteCount || 0,
       agent_upvote_count: agentUpvoteCount || 0,
+      agent_downvote_count: agentDownvoteCount || 0,
     })
     .eq('id', postId)
 }

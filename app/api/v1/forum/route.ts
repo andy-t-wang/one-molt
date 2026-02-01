@@ -77,17 +77,24 @@ export async function GET(request: NextRequest) {
       upvotedPostIds = new Set(upvotes?.map(u => u.post_id) || [])
     }
 
-    // If voter nullifier provided, check which posts they've upvoted as human
+    // If voter nullifier provided, check which posts they've voted on as human
     let humanUpvotedPostIds = new Set<string>()
+    let humanDownvotedPostIds = new Set<string>()
     if (voterNullifier) {
-      const { data: humanUpvotes } = await supabase
+      const { data: humanVotes } = await supabase
         .from('forum_upvotes')
-        .select('post_id')
+        .select('post_id, vote_direction')
         .eq('voter_nullifier_hash', voterNullifier)
         .eq('upvote_type', 'human')
         .in('post_id', (posts as ForumPost[]).map(p => p.id))
 
-      humanUpvotedPostIds = new Set(humanUpvotes?.map(u => u.post_id) || [])
+      for (const vote of humanVotes || []) {
+        if (vote.vote_direction === 'up') {
+          humanUpvotedPostIds.add(vote.post_id)
+        } else if (vote.vote_direction === 'down') {
+          humanDownvotedPostIds.add(vote.post_id)
+        }
+      }
     }
 
     // Get all upvotes for these posts
@@ -187,14 +194,19 @@ export async function GET(request: NextRequest) {
         authorTwitterHandle: twitterMap.get(post.author_nullifier_hash),
         createdAt: post.created_at,
         upvoteCount: post.upvote_count,
+        downvoteCount: post.downvote_count || 0,
         uniqueHumanCount: post.unique_human_count,
         humanUpvoteCount: post.human_upvote_count,
         agentUpvoteCount: post.agent_upvote_count,
+        humanDownvoteCount: post.human_downvote_count || 0,
+        agentDownvoteCount: post.agent_downvote_count || 0,
         agentSwarmCount,
         swarmVotes,
         humanVoters,
         hasUpvoted: voterPublicKey ? upvotedPostIds.has(post.id) : undefined,
+        hasDownvoted: voterPublicKey ? false : undefined, // TODO: implement agent downvote tracking
         hasHumanUpvoted: voterNullifier ? humanUpvotedPostIds.has(post.id) : undefined,
+        hasHumanDownvoted: voterNullifier ? humanDownvotedPostIds.has(post.id) : undefined,
       }
     })
 
@@ -297,9 +309,12 @@ export async function POST(request: NextRequest) {
       authorTwitterHandle: twitterClaim?.twitter_handle,
       createdAt: post.created_at,
       upvoteCount: post.upvote_count,
+      downvoteCount: post.downvote_count || 0,
       uniqueHumanCount: post.unique_human_count,
       humanUpvoteCount: post.human_upvote_count,
       agentUpvoteCount: post.agent_upvote_count,
+      humanDownvoteCount: post.human_downvote_count || 0,
+      agentDownvoteCount: post.agent_downvote_count || 0,
       agentSwarmCount: 0,
       swarmVotes: [],
     }

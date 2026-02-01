@@ -1,4 +1,4 @@
-// POST /api/v1/forum/[postId]/upvote - Upvote a forum post (agent vote)
+// POST /api/v1/forum/[postId]/downvote - Downvote a forum post (agent vote)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
@@ -30,9 +30,9 @@ export async function POST(
       )
     }
 
-    if (payload.action !== 'forum_upvote') {
+    if (payload.action !== 'forum_downvote') {
       return NextResponse.json<ApiError>(
-        { error: 'Invalid action. Expected forum_upvote' },
+        { error: 'Invalid action. Expected forum_downvote' },
         { status: 400 }
       )
     }
@@ -59,10 +59,10 @@ export async function POST(
     // Check if post exists
     const { data: post, error: postError } = await supabase
       .from('forum_posts')
-      .select('id, upvote_count, downvote_count, unique_human_count, human_upvote_count, agent_upvote_count, agent_downvote_count')
+      .select('id, upvote_count, downvote_count, unique_human_count, human_upvote_count, human_downvote_count, agent_upvote_count, agent_downvote_count')
       .eq('id', postId)
       .is('deleted_at', null)
-      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'downvote_count' | 'unique_human_count' | 'human_upvote_count' | 'agent_upvote_count' | 'agent_downvote_count'>>()
+      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'downvote_count' | 'unique_human_count' | 'human_upvote_count' | 'human_downvote_count' | 'agent_upvote_count' | 'agent_downvote_count'>>()
 
     if (postError || !post) {
       return NextResponse.json<ApiError>(
@@ -85,21 +85,20 @@ export async function POST(
     let newAgentUpvoteCount = post.agent_upvote_count
     let newAgentDownvoteCount = post.agent_downvote_count || 0
     let newUniqueHumanCount = post.unique_human_count
-    let isNewHuman = false
 
     if (existingVote) {
-      // Already voted - check if already upvoted
-      if (existingVote.vote_direction === 'up') {
+      // Already voted - check if already downvoted
+      if (existingVote.vote_direction === 'down') {
         return NextResponse.json<ApiError>(
-          { error: 'Already upvoted this post' },
+          { error: 'Already downvoted this post' },
           { status: 409 }
         )
       }
 
-      // Switch from downvote to upvote
+      // Switch from upvote to downvote
       const { error: updateVoteError } = await supabase
         .from('forum_upvotes')
-        .update({ vote_direction: 'up' })
+        .update({ vote_direction: 'down' })
         .eq('id', existingVote.id)
 
       if (updateVoteError) {
@@ -110,26 +109,29 @@ export async function POST(
         )
       }
 
-      // Update counts (switching from down to up)
-      newUpvoteCount += 1
-      newDownvoteCount -= 1
-      newAgentUpvoteCount += 1
-      newAgentDownvoteCount -= 1
-    } else {
-      // Check if this human has already upvoted via another molt (agent upvote)
-      const { data: humanUpvote } = await supabase
+      // Update counts (switching from up to down)
+      newUpvoteCount -= 1
+      newDownvoteCount += 1
+      newAgentUpvoteCount -= 1
+      newAgentDownvoteCount += 1
+
+      // Check if we need to decrement unique human count
+      // (if this was the only upvote from this human)
+      const { data: otherHumanUpvotes } = await supabase
         .from('forum_upvotes')
         .select('id')
         .eq('post_id', postId)
         .eq('voter_nullifier_hash', verification.registration.nullifier_hash)
         .eq('upvote_type', 'agent')
         .eq('vote_direction', 'up')
+        .neq('id', existingVote.id)
         .limit(1)
-        .single()
 
-      isNewHuman = !humanUpvote
-
-      // Insert the upvote with type 'agent' and direction 'up'
+      if (!otherHumanUpvotes || otherHumanUpvotes.length === 0) {
+        newUniqueHumanCount = Math.max(0, newUniqueHumanCount - 1)
+      }
+    } else {
+      // Insert the downvote with type 'agent' and direction 'down'
       const { error: insertError } = await supabase
         .from('forum_upvotes')
         .insert({
@@ -137,23 +139,20 @@ export async function POST(
           voter_public_key: verification.registration.public_key,
           voter_nullifier_hash: verification.registration.nullifier_hash,
           upvote_type: 'agent',
-          vote_direction: 'up',
+          vote_direction: 'down',
         })
 
       if (insertError) {
-        console.error('Error inserting upvote:', insertError)
+        console.error('Error inserting downvote:', insertError)
         return NextResponse.json<ApiError>(
-          { error: 'Failed to upvote' },
+          { error: 'Failed to downvote' },
           { status: 500 }
         )
       }
 
-      // Update counts for new upvote
-      newUpvoteCount += 1
-      newAgentUpvoteCount += 1
-      if (isNewHuman) {
-        newUniqueHumanCount += 1
-      }
+      // Update counts for new downvote
+      newDownvoteCount += 1
+      newAgentDownvoteCount += 1
     }
 
     // Update post counts
@@ -179,13 +178,13 @@ export async function POST(
       upvoteCount: newUpvoteCount,
       downvoteCount: newDownvoteCount,
       humanUpvoteCount: post.human_upvote_count,
+      humanDownvoteCount: post.human_downvote_count || 0,
       agentUpvoteCount: newAgentUpvoteCount,
       agentDownvoteCount: newAgentDownvoteCount,
       uniqueHumanCount: newUniqueHumanCount,
-      isNewHuman,
     }, { status: 200 })
   } catch (error) {
-    console.error('Forum upvote error:', error)
+    console.error('Forum downvote error:', error)
     return NextResponse.json<ApiError>(
       { error: 'Internal server error' },
       { status: 500 }
