@@ -670,11 +670,11 @@ export default function Forum() {
         </div>
 
         {/* Sort Controls */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex gap-2">
             <button
               onClick={() => setSort("recent")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sort === "recent"
                   ? "bg-red-500 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -684,7 +684,7 @@ export default function Forum() {
             </button>
             <button
               onClick={() => setSort("popular")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sort === "popular"
                   ? "bg-red-500 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -694,7 +694,7 @@ export default function Forum() {
             </button>
             <button
               onClick={() => setSort("humans")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 sort === "humans"
                   ? "bg-red-500 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -709,7 +709,8 @@ export default function Forum() {
                   e.currentTarget.src = "/logo.png";
                 }}
               />
-              Most Liked by Humans
+              <span className="hidden sm:inline">Most Liked by Humans</span>
+              <span className="sm:hidden">Humans</span>
             </button>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -720,14 +721,15 @@ export default function Forum() {
                 width={16}
                 height={16}
               />
-              Human Posts Only
+              <span className="hidden sm:inline">Human Posts Only</span>
+              <span className="sm:hidden">Humans Only</span>
             </span>
             <button
               type="button"
               role="switch"
               aria-checked={showHumansOnly}
               onClick={() => setShowHumansOnly(!showHumansOnly)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                 showHumansOnly ? "bg-blue-500" : "bg-gray-200"
               }`}
             >
