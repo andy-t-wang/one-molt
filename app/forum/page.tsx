@@ -898,9 +898,13 @@ function PostCard({
   defaultExpanded?: boolean;
   upvoteNullifier?: string | null;
 }) {
-  const [expandedSection, setExpandedSection] = useState<"votes" | "comments" | null>(defaultExpanded ? "votes" : null);
+  const [expandedSection, setExpandedSection] = useState<
+    "votes" | "comments" | null
+  >(defaultExpanded ? "votes" : null);
   const [comments, setComments] = useState<ForumComment[]>([]);
-  const [localCommentCount, setLocalCommentCount] = useState(post.commentCount || 0);
+  const [localCommentCount, setLocalCommentCount] = useState(
+    post.commentCount || 0,
+  );
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -947,6 +951,7 @@ function PostCard({
 
       if (response.ok && data.id) {
         setComments((prev) => [...prev, data]);
+        setLocalCommentCount((prev) => prev + 1);
         setCommentText("");
       } else {
         if (response.status === 401) {
@@ -974,14 +979,22 @@ function PostCard({
     setExpandedSection(expandedSection === "comments" ? null : "comments");
   };
 
+  const isHumanPost = post.authorPublicKey.startsWith("human:");
+
   return (
     <div
-      className={`bg-gray-50 border rounded-xl flex ${
-        isMyPost ? "border-red-200 bg-red-50/30" : "border-gray-200"
+      className={`border rounded-xl flex ${
+        isMyPost
+          ? "border-red-200 bg-red-50/30"
+          : isHumanPost
+            ? "border-blue-200 bg-blue-50/30"
+            : "bg-gray-50 border-gray-200"
       }`}
     >
       {/* Reddit-style vote column */}
-      <div className="flex flex-col items-center py-4 px-3 bg-gray-100/50 rounded-l-xl">
+      <div
+        className={`flex flex-col items-center py-4 px-3 rounded-l-xl ${isHumanPost ? "bg-blue-100/50" : "bg-gray-100/50"}`}
+      >
         {/* Upvote button */}
         <button
           onClick={() => onVote("up")}
@@ -1095,7 +1108,7 @@ function PostCard({
                     width={12}
                     height={12}
                   />
-                  Posted by Human
+                  Human
                 </span>
                 <Link
                   href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
@@ -1141,10 +1154,7 @@ function PostCard({
         </div>
 
         {/* Content - clickable to expand */}
-        <button
-          onClick={toggleVotes}
-          className="text-left w-full"
-        >
+        <button onClick={toggleVotes} className="text-left w-full">
           <p className="text-gray-900 whitespace-pre-wrap mb-3">
             {post.content}
           </p>
@@ -1163,14 +1173,14 @@ function PostCard({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-          <span className="font-medium">Vote Breakdown</span>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+            <span className="font-medium">Vote Breakdown</span>
           </button>
 
           {/* Comments Toggle */}
@@ -1192,7 +1202,7 @@ function PostCard({
               />
             </svg>
             <span className="font-medium">
-              {post.commentCount || 0} Comment{(post.commentCount || 0) !== 1 ? "s" : ""}
+              {localCommentCount} Comment{localCommentCount !== 1 ? "s" : ""}
             </span>
           </button>
         </div>
@@ -1344,7 +1354,9 @@ function PostCard({
         {/* Comments Section */}
         {expandedSection === "comments" && (
           <div className="border-t border-gray-200 pt-3 mt-2">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Comments</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">
+              Comments
+            </h4>
 
             {/* Comment Input */}
             <div className="mb-4">
@@ -1358,7 +1370,9 @@ function PostCard({
                 disabled={isSubmittingComment}
               />
               <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-gray-400">{commentText.length}/1000</span>
+                <span className="text-xs text-gray-400">
+                  {commentText.length}/1000
+                </span>
                 <button
                   onClick={handleSubmitComment}
                   disabled={!commentText.trim() || isSubmittingComment}
@@ -1367,7 +1381,12 @@ function PostCard({
                   {isSubmittingComment ? (
                     <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <img src="/verified_human.svg" alt="" width={12} height={12} />
+                    <img
+                      src="/verified_human.svg"
+                      alt=""
+                      width={12}
+                      height={12}
+                    />
                   )}
                   Comment
                 </button>
@@ -1382,16 +1401,33 @@ function PostCard({
             ) : comments.length > 0 ? (
               <div className="space-y-3">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="bg-white border border-gray-200 rounded-lg p-3">
+                  <div
+                    key={comment.id}
+                    className={`rounded-lg p-3 border ${
+                      comment.authorType === "human"
+                        ? "bg-blue-50/50 border-blue-200"
+                        : "bg-white border-gray-200"
+                    }`}
+                  >
                     <div className="flex items-center gap-2 mb-1">
                       {comment.authorType === "human" ? (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                          <img src="/verified_human.svg" alt="" width={10} height={10} />
+                          <img
+                            src="/verified_human.svg"
+                            alt=""
+                            width={10}
+                            height={10}
+                          />
                           Human
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-                          <Image src="/logo.png" alt="" width={10} height={10} />
+                          <Image
+                            src="/logo.png"
+                            alt=""
+                            width={10}
+                            height={10}
+                          />
                           Molt
                         </span>
                       )}
@@ -1400,9 +1436,13 @@ function PostCard({
                         className="text-xs text-gray-500 hover:text-gray-700"
                       >
                         {comment.authorTwitterHandle ? (
-                          <span className="text-blue-500">@{comment.authorTwitterHandle}</span>
+                          <span className="text-blue-500">
+                            @{comment.authorTwitterHandle}
+                          </span>
                         ) : (
-                          <span>{truncateKey(comment.authorNullifierHash, 4)}</span>
+                          <span>
+                            {truncateKey(comment.authorNullifierHash, 4)}
+                          </span>
                         )}
                       </Link>
                       <span className="text-xs text-gray-400">
@@ -1414,7 +1454,9 @@ function PostCard({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-4">No comments yet. Be the first to comment!</p>
+              <p className="text-sm text-gray-500 text-center py-4">
+                No comments yet. Be the first to comment!
+              </p>
             )}
 
             {/* WorldID verification modal for commenting */}
@@ -1422,13 +1464,25 @@ function PostCard({
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Verify to Comment</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Verify to Comment
+                    </h3>
                     <button
                       onClick={() => setShowCommentVerify(false)}
                       className="text-gray-400 hover:text-gray-600"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -1436,12 +1490,18 @@ function PostCard({
                     Verify with WorldID orb to comment as a verified human.
                   </p>
                   <IDKitWidget
-                    app_id={(process.env.NEXT_PUBLIC_WORLDID_APP_ID || "") as `app_${string}`}
+                    app_id={
+                      (process.env.NEXT_PUBLIC_WORLDID_APP_ID ||
+                        "") as `app_${string}`
+                    }
                     action={process.env.NEXT_PUBLIC_WORLDID_ACTION || ""}
                     verification_level={"orb" as VerificationLevel}
                     onSuccess={(result) => {
                       // Store nullifier and submit comment
-                      localStorage.setItem(UPVOTE_NULLIFIER_KEY, result.nullifier_hash);
+                      localStorage.setItem(
+                        UPVOTE_NULLIFIER_KEY,
+                        result.nullifier_hash,
+                      );
                       setShowCommentVerify(false);
                       // Resubmit with proof
                       fetch(`/api/v1/forum/${post.id}/comments`, {
@@ -1461,6 +1521,7 @@ function PostCard({
                         .then((data) => {
                           if (data.id) {
                             setComments((prev) => [...prev, data]);
+                            setLocalCommentCount((prev) => prev + 1);
                             setCommentText("");
                           }
                         });
@@ -1475,7 +1536,11 @@ function PostCard({
                         onClick={open}
                         className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                       >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg
+                          className="w-5 h-5"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
                           <circle cx="12" cy="12" r="10" />
                           <circle cx="12" cy="12" r="4" fill="white" />
                         </svg>
