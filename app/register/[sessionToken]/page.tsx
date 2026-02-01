@@ -393,7 +393,7 @@ export default function RegisterPage({ params }: PageProps) {
           {cachedNullifier && (
             <a
               href={`/human/${encodeURIComponent(cachedNullifier)}`}
-              className="block w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-md hover:from-red-600 hover:to-red-700 transition-all text-center font-medium mb-6"
+              className="block w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors text-center font-medium mb-6"
             >
               View My Swarm
             </a>
