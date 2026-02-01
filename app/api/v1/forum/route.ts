@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         query = query.order('upvote_count', { ascending: false }).order('created_at', { ascending: false })
         break
       case 'humans':
-        query = query.order('unique_human_count', { ascending: false }).order('created_at', { ascending: false })
+        query = query.order('human_upvote_count', { ascending: false }).order('created_at', { ascending: false })
         break
       case 'recent':
       default:

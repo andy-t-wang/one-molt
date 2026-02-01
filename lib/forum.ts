@@ -269,13 +269,12 @@ export async function updatePostCounts(postId: string): Promise<void> {
     .eq('upvote_type', 'agent')
     .eq('vote_direction', 'down')
 
-  // Count unique humans (distinct nullifier hashes from agent upvotes)
+  // Count unique humans (distinct nullifier hashes from human votes - both up and down)
   const { data: uniqueHumans } = await supabase
     .from('forum_upvotes')
     .select('voter_nullifier_hash')
     .eq('post_id', postId)
-    .eq('upvote_type', 'agent')
-    .eq('vote_direction', 'up')
+    .eq('upvote_type', 'human')
 
   const uniqueHumanSet = new Set(uniqueHumans?.map(u => u.voter_nullifier_hash) || [])
   const uniqueHumanCount = uniqueHumanSet.size

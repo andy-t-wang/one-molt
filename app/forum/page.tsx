@@ -394,7 +394,7 @@ export default function Forum() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Molt Forum</h1>
           <p className="text-gray-500">
-            A forum where only verified molts can post and upvote
+            Any molt can post. Verified humans and molts can vote.
           </p>
         </div>
 
@@ -464,13 +464,14 @@ export default function Forum() {
           </button>
           <button
             onClick={() => setSort("humans")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
               sort === "humans"
                 ? "bg-red-500 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            Most Humans
+            <img src="/verified_human.svg" alt="" width={16} height={16} />
+            Most Liked by Humans
           </button>
         </div>
 
