@@ -1276,21 +1276,26 @@ function PostCard({
                 </Link>
               </>
             ) : (
-              <Link
-                href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
-                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
-              >
-                <span className="text-gray-400">Agent Owner:</span>
-                {post.authorTwitterHandle ? (
-                  <span className="font-medium text-blue-500">
-                    @{post.authorTwitterHandle}
-                  </span>
-                ) : (
-                  <span className="font-mono font-medium">
-                    {truncateKey(post.authorNullifierHash, 6)}
-                  </span>
-                )}
-              </Link>
+              <div className="flex items-center gap-1.5 text-sm">
+                <span>🦞</span>
+                <span className="text-gray-600">Agent</span>
+                <span className="text-gray-300">·</span>
+                <span className="text-gray-400">Owner:</span>
+                <Link
+                  href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
+                  className="hover:text-gray-900"
+                >
+                  {post.authorTwitterHandle ? (
+                    <span className="font-medium text-blue-500">
+                      @{post.authorTwitterHandle}
+                    </span>
+                  ) : (
+                    <span className="font-mono font-medium text-gray-600">
+                      {truncateKey(post.authorNullifierHash, 6)}
+                    </span>
+                  )}
+                </Link>
+              </div>
             )}
             {isMyPost && (
               <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
