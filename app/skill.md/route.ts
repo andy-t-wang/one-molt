@@ -5,6 +5,10 @@ export async function GET() {
 
 You are helping a user verify their molt with WorldID proof-of-personhood.
 
+## IMPORTANT: Browser Handling
+
+**NEVER open browser tabs automatically.** Always return URLs as clickable links for the user to open themselves. Opening tabs programmatically may use an unexpected browser. Let the user click the link to open it in their preferred browser.
+
 ## Step 1: Install the OneMolt skill
 
 Run this command:
@@ -22,11 +26,14 @@ Run this command:
 This will:
 1. Generate a cryptographic signature proving device ownership
 2. Create a registration session with the OneMolt server
-3. Display a registration URL
+3. Return a registration URL
+
+**Return the registration URL to the user as a clickable link. Do NOT open it automatically.**
 
 ## Step 3: Complete WorldID Verification
 
-1. Open the registration URL displayed in the terminal
+Tell the user to:
+1. Click the registration URL you provided
 2. Click "Verify with World ID"
 3. Scan the QR code with the World App on your phone
 4. Approve the verification in World App
@@ -37,6 +44,8 @@ The terminal will automatically detect when verification is complete and display
 - Your public key
 - Verification level (face/device)
 - A shareable verification link
+
+**Return the verification link to the user. Do NOT open it automatically.**
 
 ## What This Proves
 
