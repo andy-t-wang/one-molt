@@ -102,6 +102,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=already_claimed', request.url))
     }
 
+    // Check if this nullifier already has a different Twitter account linked
+    // This prevents attackers from hijacking someone else's nullifier
+    const { data: existingNullifierClaim } = await supabase
+      .from('twitter_claims')
+      .select('twitter_handle')
+      .eq('nullifier_hash', nullifierHash)
+      .single()
+
+    if (existingNullifierClaim && existingNullifierClaim.twitter_handle !== twitterHandle.toLowerCase()) {
+      return NextResponse.redirect(new URL('/leaderboard?twitter_error=nullifier_already_linked', request.url))
+    }
+
     // Save the Twitter claim
     await supabase
       .from('twitter_claims')
