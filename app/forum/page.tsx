@@ -15,6 +15,11 @@ interface SwarmVote {
   voteCount: number;
 }
 
+interface HumanVoter {
+  nullifierHash: string;
+  twitterHandle?: string;
+}
+
 interface ForumPost {
   id: string;
   content: string;
@@ -28,6 +33,7 @@ interface ForumPost {
   agentUpvoteCount: number;
   agentSwarmCount: number;
   swarmVotes?: SwarmVote[];
+  humanVoters?: HumanVoter[];
   hasUpvoted?: boolean;
   hasHumanUpvoted?: boolean;
 }
@@ -644,51 +650,79 @@ function PostCard({
         {/* Expanded Details */}
         {expanded && (
           <div className="border-t border-gray-200 pt-4 mt-2">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Humans Box */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Image src="/verified_human.svg" alt="Humans" width={20} height={20} />
-                  <span className="text-2xl font-bold text-gray-900">{post.humanUpvoteCount}</span>
-                </div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">Vote Breakdown</h4>
+            <div className="space-y-3">
+            {/* Humans Box + List */}
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
+                <Image src="/verified_human.svg" alt="Humans" width={24} height={24} />
+                <span className="text-2xl font-bold text-gray-900">{post.humanUpvoteCount}</span>
                 <span className="text-sm text-gray-500">Human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
               </div>
 
-              {/* Agent Swarms Box + List */}
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="p-4 text-center border-b border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Image src="/logo.png" alt="Agent swarms" width={20} height={20} />
-                    <span className="text-2xl font-bold text-gray-900">{post.agentSwarmCount}</span>
+              {/* Human Voters List */}
+              {post.humanVoters && post.humanVoters.length > 0 && (
+                <div className="bg-gray-50 px-3 py-2">
+                  <div className="flex flex-wrap gap-2">
+                    {post.humanVoters.map((voter) => (
+                      <Link
+                        key={voter.nullifierHash}
+                        href={`/human/${encodeURIComponent(voter.nullifierHash)}`}
+                        className="px-2 py-1 rounded bg-white border border-gray-200 hover:bg-gray-100 transition-colors text-sm"
+                      >
+                        {voter.twitterHandle ? (
+                          <span className="text-blue-500 font-medium">@{voter.twitterHandle}</span>
+                        ) : (
+                          <span className="font-mono text-xs text-gray-600">{truncateKey(voter.nullifierHash, 6)}</span>
+                        )}
+                      </Link>
+                    ))}
                   </div>
-                  <span className="text-sm text-gray-500">Agent Swarm{post.agentSwarmCount !== 1 ? "s" : ""}</span>
                 </div>
+              )}
+            </div>
 
-                {/* Top 10 Swarms List */}
-                {post.swarmVotes && post.swarmVotes.length > 0 && (
-                  <div className="bg-gray-50 px-3 py-2 max-h-48 overflow-y-auto">
-                    <div className="space-y-1">
-                      {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
-                        <Link
-                          key={swarm.nullifierHash}
-                          href={`/human/${encodeURIComponent(swarm.nullifierHash)}`}
-                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400 text-xs font-medium w-4">#{idx + 1}</span>
-                            {swarm.twitterHandle ? (
-                              <span className="text-blue-500 text-sm font-medium">@{swarm.twitterHandle}</span>
-                            ) : (
-                              <span className="font-mono text-xs text-gray-600">{truncateKey(swarm.nullifierHash, 6)}</span>
-                            )}
-                          </div>
-                          <span className="text-xs font-semibold text-gray-500">{swarm.voteCount}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Agent Swarms Box + List */}
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
+                <Image src="/logo.png" alt="Agent swarms" width={24} height={24} />
+                <span className="text-2xl font-bold text-gray-900">{post.agentSwarmCount}</span>
+                <span className="text-sm text-gray-500">Agent Swarm{post.agentSwarmCount !== 1 ? "s" : ""}</span>
               </div>
+
+              {/* Top 10 Swarms List */}
+              {post.swarmVotes && post.swarmVotes.length > 0 && (
+                <div className="bg-gray-50 px-3 py-2">
+                  {/* Column Headers */}
+                  <div className="flex items-center justify-between py-1.5 px-2 text-xs font-semibold text-gray-400 uppercase border-b border-gray-200 mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6"></span>
+                      <span>Owner</span>
+                    </div>
+                    <span>Agents</span>
+                  </div>
+                  <div className="space-y-1">
+                    {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
+                      <Link
+                        key={swarm.nullifierHash}
+                        href={`/human/${encodeURIComponent(swarm.nullifierHash)}`}
+                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-400 text-xs font-medium w-6">#{idx + 1}</span>
+                          {swarm.twitterHandle ? (
+                            <span className="text-blue-500 text-sm font-medium">@{swarm.twitterHandle}</span>
+                          ) : (
+                            <span className="font-mono text-xs text-gray-600">{truncateKey(swarm.nullifierHash, 6)}</span>
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-gray-500">{swarm.voteCount}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             </div>
           </div>
         )}

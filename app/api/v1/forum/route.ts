@@ -90,13 +90,37 @@ export async function GET(request: NextRequest) {
       humanUpvotedPostIds = new Set(humanUpvotes?.map(u => u.post_id) || [])
     }
 
-    // Get all agent upvotes for these posts to calculate swarm data
+    // Get all upvotes for these posts
     const postIds = (posts as ForumPost[]).map(p => p.id)
+
+    // Get agent upvotes for swarm data
     const { data: agentUpvotes } = await supabase
       .from('forum_upvotes')
       .select('post_id, voter_nullifier_hash')
       .eq('upvote_type', 'agent')
       .in('post_id', postIds)
+
+    // Get human upvotes for human voters list
+    const { data: humanUpvotes } = await supabase
+      .from('forum_upvotes')
+      .select('post_id, voter_nullifier_hash')
+      .eq('upvote_type', 'human')
+      .in('post_id', postIds)
+
+    // Group human upvotes by post_id
+    const humanVotersByPost = new Map<string, Set<string>>()
+    for (const upvote of humanUpvotes || []) {
+      if (!humanVotersByPost.has(upvote.post_id)) {
+        humanVotersByPost.set(upvote.post_id, new Set())
+      }
+      humanVotersByPost.get(upvote.post_id)!.add(upvote.voter_nullifier_hash)
+    }
+
+    // Get all unique nullifier hashes from human upvotes to fetch their twitter handles
+    const allHumanNullifiers = new Set<string>()
+    for (const upvote of humanUpvotes || []) {
+      allHumanNullifiers.add(upvote.voter_nullifier_hash)
+    }
 
     // Group agent upvotes by post_id and nullifier_hash
     const swarmDataByPost = new Map<string, Map<string, number>>()
@@ -114,16 +138,19 @@ export async function GET(request: NextRequest) {
       allSwarmNullifiers.add(upvote.voter_nullifier_hash)
     }
 
-    // Fetch twitter handles for swarm voters
-    let swarmTwitterMap = new Map<string, string>()
-    if (allSwarmNullifiers.size > 0) {
-      const { data: swarmTwitterClaims } = await supabase
+    // Combine all voter nullifiers (swarm + human) to fetch twitter handles in one query
+    const allVoterNullifiers = new Set([...allSwarmNullifiers, ...allHumanNullifiers])
+
+    // Fetch twitter handles for all voters
+    let voterTwitterMap = new Map<string, string>()
+    if (allVoterNullifiers.size > 0) {
+      const { data: voterTwitterClaims } = await supabase
         .from('twitter_claims')
         .select('nullifier_hash, twitter_handle')
-        .in('nullifier_hash', [...allSwarmNullifiers])
+        .in('nullifier_hash', [...allVoterNullifiers])
 
-      swarmTwitterMap = new Map(
-        swarmTwitterClaims?.map(tc => [tc.nullifier_hash, tc.twitter_handle]) || []
+      voterTwitterMap = new Map(
+        voterTwitterClaims?.map(tc => [tc.nullifier_hash, tc.twitter_handle]) || []
       )
     }
 
@@ -137,10 +164,19 @@ export async function GET(request: NextRequest) {
         ? [...postSwarms.entries()]
             .map(([nullifierHash, voteCount]) => ({
               nullifierHash,
-              twitterHandle: swarmTwitterMap.get(nullifierHash),
+              twitterHandle: voterTwitterMap.get(nullifierHash),
               voteCount,
             }))
             .sort((a, b) => b.voteCount - a.voteCount)
+        : []
+
+      // Build human voters array
+      const postHumanVoters = humanVotersByPost.get(post.id)
+      const humanVoters = postHumanVoters
+        ? [...postHumanVoters].map(nullifierHash => ({
+            nullifierHash,
+            twitterHandle: voterTwitterMap.get(nullifierHash),
+          }))
         : []
 
       return {
@@ -156,6 +192,7 @@ export async function GET(request: NextRequest) {
         agentUpvoteCount: post.agent_upvote_count,
         agentSwarmCount,
         swarmVotes,
+        humanVoters,
         hasUpvoted: voterPublicKey ? upvotedPostIds.has(post.id) : undefined,
         hasHumanUpvoted: voterNullifier ? humanUpvotedPostIds.has(post.id) : undefined,
       }
