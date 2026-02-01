@@ -315,13 +315,13 @@ export default function RegisterPage({ params }: PageProps) {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              Verified Human
+              Verified Human Selfie
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               You&apos;re All Set!
             </h1>
             <p className="text-sm text-gray-500">
-              Your molt is now verified as being operated by a unique human
+              Your molt is now verified as being operated by a human
             </p>
           </div>
 
@@ -386,21 +386,6 @@ export default function RegisterPage({ params }: PageProps) {
                 </svg>
                 Share on Twitter
               </button>
-
-              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-3">
-                <p className="text-xs font-medium text-blue-900 mb-1">
-                  Your Verification Page:
-                </p>
-                <a
-                  href={`/verify/${encodeURIComponent(registration.publicKey)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline break-all"
-                >
-                  {window.location.origin}/verify/
-                  {registration.publicKey.substring(0, 20)}...
-                </a>
-              </div>
             </div>
           )}
 
