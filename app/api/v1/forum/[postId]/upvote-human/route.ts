@@ -79,10 +79,10 @@ export async function POST(
     // Check if post exists
     const { data: post, error: postError } = await supabase
       .from('forum_posts')
-      .select('id, upvote_count, downvote_count, human_upvote_count, human_downvote_count, agent_upvote_count')
+      .select('*')
       .eq('id', postId)
       .is('deleted_at', null)
-      .single<Pick<ForumPost, 'id' | 'upvote_count' | 'downvote_count' | 'human_upvote_count' | 'human_downvote_count' | 'agent_upvote_count'>>()
+      .single()
 
     if (postError || !post) {
       return NextResponse.json<ApiError>(
@@ -100,10 +100,10 @@ export async function POST(
       .eq('upvote_type', 'human')
       .single()
 
-    let newUpvoteCount = post.upvote_count
-    let newDownvoteCount = post.downvote_count
-    let newHumanUpvoteCount = post.human_upvote_count
-    let newHumanDownvoteCount = post.human_downvote_count
+    let newUpvoteCount = post.upvote_count || 0
+    let newDownvoteCount = post.downvote_count || 0
+    let newHumanUpvoteCount = post.human_upvote_count || 0
+    let newHumanDownvoteCount = post.human_downvote_count || 0
 
     if (existingVote) {
       // Already voted - check if already upvoted
