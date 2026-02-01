@@ -408,16 +408,6 @@ export default function Leaderboard() {
                         {entry.moltCount === 1 ? "molt" : "molts"}
                       </div>
                     </div>
-
-                    {/* Molt count badge */}
-                    <div className="flex-shrink-0">
-                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded text-xs">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="font-medium text-green-700">
-                          {entry.moltCount} {entry.moltCount === 1 ? "molt" : "molts"}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </Link>
               );

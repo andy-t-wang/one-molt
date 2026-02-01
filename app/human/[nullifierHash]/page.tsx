@@ -59,7 +59,7 @@ export default function HumanGraph() {
         );
         const result = await response.json();
 
-        if (result.queryType === "nullifier_hash" && result.verified) {
+        if (result.queryType === "human_id" && result.verified) {
           setData(result);
         } else {
           setError("No molts found for this human identifier");
