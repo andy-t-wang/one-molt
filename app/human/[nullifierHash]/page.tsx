@@ -67,7 +67,14 @@ export default function HumanGraph() {
         const result = await response.json();
 
         if (result.queryType === "human_id" && result.verified) {
-          setData(result);
+          // TODO: Remove this mock data - just for UI testing
+          const mockMolts: MoltInfo[] = Array.from({ length: 50 }, (_, i) => ({
+            deviceId: `mock-device-${i + 1}`,
+            publicKey: `MCowBQYDK2VwAyEA${Math.random().toString(36).slice(2, 34)}`,
+            verificationLevel: "orb",
+            registeredAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+          }));
+          setData({ ...result, molts: [...result.molts, ...mockMolts] });
         } else {
           setError("No molts found for this human identifier");
         }
@@ -356,6 +363,28 @@ export default function HumanGraph() {
                           strokeOpacity="0.2"
                         />
                       ))}
+                      {/* Connecting lines from center to molts */}
+                      {rings.map((ring, ringIdx) => {
+                        const radius = centerOffset + ringIdx * ringSpacing;
+                        return ring.map((moltIndex, posInRing) => {
+                          const angle = (posInRing / ring.length) * 2 * Math.PI - Math.PI / 2;
+                          const x = Math.cos(angle) * radius;
+                          const y = Math.sin(angle) * radius;
+                          return (
+                            <line
+                              key={`line-${moltIndex}`}
+                              x1={canvasSize / 2}
+                              y1={canvasSize / 2}
+                              x2={canvasSize / 2 + x}
+                              y2={canvasSize / 2 + y}
+                              stroke="#22c55e"
+                              strokeWidth="1"
+                              strokeDasharray="4 4"
+                              strokeOpacity="0.3"
+                            />
+                          );
+                        });
+                      })}
                     </svg>
 
                     {/* Center node - Human */}

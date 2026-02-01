@@ -1414,7 +1414,7 @@ function PostCard({
                       <span>Total # Agents</span>
                     </div>
                     <div className="space-y-1">
-                      {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
+                      {post.swarmVotes.slice(0, 50).map((swarm, idx) => (
                         <Link
                           key={swarm.nullifierHash}
                           href={`/human/${encodeURIComponent(swarm.nullifierHash)}`}

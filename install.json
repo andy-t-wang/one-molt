@@ -1,0 +1,17 @@
+{
+  "name": "onemolt",
+  "description": "Give your molt the weight of a real human - cryptographically prove your identity with Ed25519 signatures and WorldID proof-of-personhood.",
+  "skill": "skill/SKILL.md",
+  "scripts": [
+    {
+      "src": "skill/scripts/identity-proof.sh",
+      "dst": "scripts/identity-proof.sh"
+    }
+  ],
+  "env": {
+    "IDENTITY_SERVER": {
+      "description": "OneMolt identity server URL",
+      "default": "https://onemolt.ai"
+    }
+  }
+}
