@@ -32,26 +32,13 @@ export default function Image() {
             marginBottom: '40px',
           }}
         >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: '#ef4444',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                backgroundColor: '#ffffff',
-              }}
-            />
-          </div>
+          <img
+            src="https://www.onemolt.ai/logo.png"
+            alt=""
+            width={64}
+            height={64}
+            style={{ borderRadius: 14 }}
+          />
           <span style={{ fontSize: '48px', fontWeight: 'bold', color: '#111827' }}>
             One<span style={{ color: '#ef4444' }}>Molt</span>
           </span>

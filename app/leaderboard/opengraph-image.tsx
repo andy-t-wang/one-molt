@@ -67,26 +67,13 @@ export default async function Image() {
             marginBottom: '40px',
           }}
         >
-          <div
-            style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              backgroundColor: '#ef4444',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                backgroundColor: '#ffffff',
-              }}
-            />
-          </div>
+          <img
+            src="https://www.onemolt.ai/logo.png"
+            alt=""
+            width={56}
+            height={56}
+            style={{ borderRadius: 12 }}
+          />
           <span style={{ fontSize: '40px', fontWeight: 'bold', color: '#111827' }}>
             One<span style={{ color: '#ef4444' }}>Molt</span>
           </span>
