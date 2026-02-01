@@ -76,7 +76,10 @@ export default function Leaderboard() {
     setTwitterError(null);
     setTwitterLoading(true);
     // Open in new tab - server will redirect to Twitter
-    window.open(`/api/auth/twitter?nullifier=${encodeURIComponent(myNullifier)}`, '_blank');
+    window.open(
+      `/api/auth/twitter?nullifier=${encodeURIComponent(myNullifier)}`,
+      "_blank",
+    );
     setTwitterLoading(false);
   };
 
@@ -168,7 +171,7 @@ export default function Leaderboard() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Swarm Leaderboard</h1>
           <p className="text-gray-500">
-            Humans ranked by the size of their molt swarms
+            Humans ranked by the size of their verified molt swarms
           </p>
         </div>
 
@@ -255,7 +258,11 @@ export default function Leaderboard() {
               return (
                 <div
                   key={entry.nullifierHash}
-                  onClick={() => router.push(`/human/${encodeURIComponent(entry.nullifierHash)}`)}
+                  onClick={() =>
+                    router.push(
+                      `/human/${encodeURIComponent(entry.nullifierHash)}`,
+                    )
+                  }
                   className={`block bg-gray-50 border rounded-xl p-4 hover:bg-gray-100 transition-colors cursor-pointer ${
                     isMe
                       ? "border-red-300 bg-red-50 hover:bg-red-100"
