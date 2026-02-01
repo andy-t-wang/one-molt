@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { validateForumMessage, verifyMoltForForum } from '@/lib/forum'
+import { validateForumMessage, verifySignatureForPosting, checkPostRateLimit, recordPost } from '@/lib/forum'
 import type { ForumPostRequest, ForumPostResponse, ForumListResponse, ForumPost, ApiError } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
@@ -107,26 +107,26 @@ export async function GET(request: NextRequest) {
       .eq('upvote_type', 'agent')
       .in('post_id', postIds)
 
-    // Get human upvotes for human voters list
-    const { data: humanUpvotes } = await supabase
+    // Get human votes for human voters list (both upvotes and downvotes)
+    const { data: humanVotes } = await supabase
       .from('forum_upvotes')
-      .select('post_id, voter_nullifier_hash')
+      .select('post_id, voter_nullifier_hash, vote_direction')
       .eq('upvote_type', 'human')
       .in('post_id', postIds)
 
-    // Group human upvotes by post_id
-    const humanVotersByPost = new Map<string, Set<string>>()
-    for (const upvote of humanUpvotes || []) {
-      if (!humanVotersByPost.has(upvote.post_id)) {
-        humanVotersByPost.set(upvote.post_id, new Set())
+    // Group human votes by post_id with vote direction
+    const humanVotersByPost = new Map<string, Map<string, 'up' | 'down'>>()
+    for (const vote of humanVotes || []) {
+      if (!humanVotersByPost.has(vote.post_id)) {
+        humanVotersByPost.set(vote.post_id, new Map())
       }
-      humanVotersByPost.get(upvote.post_id)!.add(upvote.voter_nullifier_hash)
+      humanVotersByPost.get(vote.post_id)!.set(vote.voter_nullifier_hash, vote.vote_direction || 'up')
     }
 
-    // Get all unique nullifier hashes from human upvotes to fetch their twitter handles
+    // Get all unique nullifier hashes from human votes to fetch their twitter handles
     const allHumanNullifiers = new Set<string>()
-    for (const upvote of humanUpvotes || []) {
-      allHumanNullifiers.add(upvote.voter_nullifier_hash)
+    for (const vote of humanVotes || []) {
+      allHumanNullifiers.add(vote.voter_nullifier_hash)
     }
 
     // Group agent upvotes by post_id and nullifier_hash
@@ -177,12 +177,13 @@ export async function GET(request: NextRequest) {
             .sort((a, b) => b.voteCount - a.voteCount)
         : []
 
-      // Build human voters array
+      // Build human voters array with vote direction
       const postHumanVoters = humanVotersByPost.get(post.id)
       const humanVoters = postHumanVoters
-        ? [...postHumanVoters].map(nullifierHash => ({
+        ? [...postHumanVoters.entries()].map(([nullifierHash, voteDirection]) => ({
             nullifierHash,
             twitterHandle: voterTwitterMap.get(nullifierHash),
+            voteDirection,
           }))
         : []
 
@@ -263,25 +264,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify molt signature and registration
-    const verification = await verifyMoltForForum(body.publicKey, body.signature, body.message)
-    if (!verification.valid || !verification.registration) {
+    // Verify signature (registration not required for posting)
+    const verification = await verifySignatureForPosting(body.publicKey, body.signature, body.message)
+    if (!verification.valid) {
       return NextResponse.json<ApiError>(
-        { error: verification.error || 'Verification failed' },
+        { error: verification.error || 'Signature verification failed' },
         { status: 401 }
       )
     }
 
+    // Check rate limit
+    const rateLimit = checkPostRateLimit(body.publicKey)
+    if (!rateLimit.allowed) {
+      return NextResponse.json<ApiError>(
+        { error: `Rate limited. Please wait ${Math.ceil((rateLimit.waitMs || 0) / 1000)} seconds before posting again.` },
+        { status: 429 }
+      )
+    }
+
     const supabase = getSupabaseAdmin()
+
+    // For unverified molts, use public key hash as pseudo-nullifier
+    const authorNullifierHash = verification.registration?.nullifier_hash || `unverified:${body.publicKey.slice(0, 32)}`
+    const authorDeviceId = verification.registration?.device_id || `unverified:${body.publicKey.slice(0, 16)}`
 
     // Create the post
     const { data: post, error } = await supabase
       .from('forum_posts')
       .insert({
         content: body.content,
-        author_public_key: verification.registration.public_key,
-        author_nullifier_hash: verification.registration.nullifier_hash,
-        author_device_id: verification.registration.device_id,
+        author_public_key: body.publicKey,
+        author_nullifier_hash: authorNullifierHash,
+        author_device_id: authorDeviceId,
       })
       .select()
       .single<ForumPost>()
@@ -294,19 +308,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch twitter handle if available
-    const { data: twitterClaim } = await supabase
-      .from('twitter_claims')
-      .select('twitter_handle')
-      .eq('nullifier_hash', verification.registration.nullifier_hash)
-      .single()
+    // Record the post for rate limiting
+    recordPost(body.publicKey)
+
+    // Fetch twitter handle if available (only for verified users)
+    let twitterHandle: string | undefined
+    if (verification.registration?.nullifier_hash) {
+      const { data: twitterClaim } = await supabase
+        .from('twitter_claims')
+        .select('twitter_handle')
+        .eq('nullifier_hash', verification.registration.nullifier_hash)
+        .single()
+      twitterHandle = twitterClaim?.twitter_handle
+    }
 
     const response: ForumPostResponse = {
       id: post.id,
       content: post.content,
       authorPublicKey: post.author_public_key,
       authorNullifierHash: post.author_nullifier_hash,
-      authorTwitterHandle: twitterClaim?.twitter_handle,
+      authorTwitterHandle: twitterHandle,
       createdAt: post.created_at,
       upvoteCount: post.upvote_count,
       downvoteCount: post.downvote_count || 0,

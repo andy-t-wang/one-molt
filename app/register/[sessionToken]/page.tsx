@@ -330,40 +330,29 @@ export default function RegisterPage({ params }: PageProps) {
             </p>
           </div>
 
-          <div className="space-y-3 mb-6">
-            <div className="bg-gray-50 p-3 rounded-md">
-              <p className="text-xs font-medium text-gray-500 mb-1">Molt ID</p>
-              <p className="text-xs font-mono text-gray-700 break-all">
-                {session?.deviceId}
-              </p>
+          {registration && (
+            <div className="flex gap-3 mb-6">
+              <div className="flex-1 bg-gray-50 p-3 rounded-md">
+                <p className="text-xs font-medium text-gray-500 mb-1">
+                  Verification
+                </p>
+                <p className="text-sm text-gray-900 capitalize">
+                  {registration.verificationLevel === "face"
+                    ? "Selfie"
+                    : "Device"}
+                </p>
+              </div>
+
+              <div className="flex-1 bg-gray-50 p-3 rounded-md">
+                <p className="text-xs font-medium text-gray-500 mb-1">
+                  Registered
+                </p>
+                <p className="text-sm text-gray-900">
+                  {new Date(registration.registeredAt).toLocaleDateString()}
+                </p>
+              </div>
             </div>
-
-            {registration && (
-              <>
-                <div className="flex gap-3">
-                  <div className="flex-1 bg-gray-50 p-3 rounded-md">
-                    <p className="text-xs font-medium text-gray-500 mb-1">
-                      Verification
-                    </p>
-                    <p className="text-sm text-gray-900 capitalize">
-                      {registration.verificationLevel === "face"
-                        ? "Selfie"
-                        : "Device"}
-                    </p>
-                  </div>
-
-                  <div className="flex-1 bg-gray-50 p-3 rounded-md">
-                    <p className="text-xs font-medium text-gray-500 mb-1">
-                      Registered
-                    </p>
-                    <p className="text-sm text-gray-900">
-                      {new Date(registration.registeredAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          )}
 
           {/* Post to Forum - Primary CTA */}
           <a
@@ -576,23 +565,45 @@ export default function RegisterPage({ params }: PageProps) {
           </p>
         </div>
 
-        <div className="mb-6 space-y-4">
-          <div className="bg-gray-50 p-4 rounded-md">
-            <p className="text-sm font-medium text-gray-900 mb-1">
-              Now prove you&apos;re human
-            </p>
-            <p className="text-xs text-gray-600 mb-4">
-              Scan with the World App to prove there&apos;s a real human behind
-              this molt.
-            </p>
-
-            <div className="bg-white border border-gray-200 p-3 rounded-md">
-              <p className="text-xs font-medium text-gray-500 mb-1">Molt ID</p>
-              <p className="text-xs font-mono text-gray-700 break-all">
-                {session?.deviceId}
+        {/* World App Download Prompt */}
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="4" fill="white" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900 mb-1">
+                World App Required
               </p>
+              <p className="text-xs text-gray-600 mb-3">
+                You&apos;ll need the World App to verify your identity. It&apos;s free and takes about 2 minutes to set up.
+              </p>
+              <a
+                href="https://world.org/world-app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 bg-black text-white text-xs font-medium px-3 py-1.5 rounded-md hover:bg-gray-800 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download World App
+              </a>
             </div>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-sm text-gray-600 text-center mb-4">
+            Already have World App? Click below to verify:
+          </p>
         </div>
 
         <div className="flex justify-center">
@@ -611,7 +622,7 @@ export default function RegisterPage({ params }: PageProps) {
             {({ open }) => (
               <button
                 onClick={open}
-                className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
+                className="w-full bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
               >
                 <svg
                   className="w-5 h-5"
@@ -627,18 +638,7 @@ export default function RegisterPage({ params }: PageProps) {
           </IDKitWidget>
         </div>
 
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-xs text-gray-400">
-            Don&apos;t have World App?{" "}
-            <a
-              href="https://world.org/world-app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
-              Download it free
-            </a>
-          </p>
+        <div className="mt-6 text-center">
           <p className="text-xs text-gray-400">
             Link expires{" "}
             {session && new Date(session.expiresAt).toLocaleString()}

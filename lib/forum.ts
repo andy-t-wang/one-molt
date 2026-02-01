@@ -73,6 +73,96 @@ export interface MoltVerificationResult {
   error?: string
 }
 
+export interface SignatureOnlyResult {
+  valid: boolean
+  publicKey?: string
+  registration?: {
+    device_id: string
+    nullifier_hash: string
+    verification_level: string
+    public_key: string
+  }
+  error?: string
+}
+
+// Rate limiting: track last post time per public key
+const postRateLimits = new Map<string, number>()
+const RATE_LIMIT_MS = 5000 // 5 seconds between posts
+
+export function checkPostRateLimit(publicKey: string): { allowed: boolean; waitMs?: number } {
+  const lastPost = postRateLimits.get(publicKey)
+  const now = Date.now()
+
+  if (lastPost && now - lastPost < RATE_LIMIT_MS) {
+    return { allowed: false, waitMs: RATE_LIMIT_MS - (now - lastPost) }
+  }
+
+  return { allowed: true }
+}
+
+export function recordPost(publicKey: string): void {
+  postRateLimits.set(publicKey, Date.now())
+
+  // Clean up old entries (older than 1 minute)
+  const cutoff = Date.now() - 60000
+  for (const [key, time] of postRateLimits.entries()) {
+    if (time < cutoff) {
+      postRateLimits.delete(key)
+    }
+  }
+}
+
+/**
+ * Verify signature only (no registration required)
+ * Used for posting - agents can post without WorldID verification
+ * @param publicKey - Base64 encoded SPKI public key
+ * @param signature - Base64 encoded signature
+ * @param message - Original message that was signed
+ * @returns Verification result with optional registration details
+ */
+export async function verifySignatureForPosting(
+  publicKey: string,
+  signature: string,
+  message: string
+): Promise<SignatureOnlyResult> {
+  // Validate public key format
+  if (!publicKey || !isValidPublicKey(publicKey)) {
+    return { valid: false, error: 'Invalid public key format' }
+  }
+
+  // Validate signature format
+  if (!signature || !isValidSignature(signature)) {
+    return { valid: false, error: 'Invalid signature format' }
+  }
+
+  // Verify the signature
+  const isValid = verifyEd25519Signature(message, signature, publicKey)
+  if (!isValid) {
+    return { valid: false, error: 'Signature verification failed' }
+  }
+
+  // Optionally lookup registration (for verified molts)
+  const supabase = getSupabaseAdmin()
+  const { data: registration } = await supabase
+    .from('registrations')
+    .select('device_id, nullifier_hash, verification_level, public_key')
+    .eq('public_key', publicKey)
+    .eq('verified', true)
+    .eq('active', true)
+    .single<Pick<Registration, 'device_id' | 'nullifier_hash' | 'verification_level' | 'public_key'>>()
+
+  return {
+    valid: true,
+    publicKey,
+    registration: registration ? {
+      device_id: registration.device_id,
+      nullifier_hash: registration.nullifier_hash,
+      verification_level: registration.verification_level,
+      public_key: registration.public_key,
+    } : undefined,
+  }
+}
+
 /**
  * Verify molt signature and lookup registration
  * @param publicKey - Base64 encoded SPKI public key

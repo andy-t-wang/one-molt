@@ -18,6 +18,7 @@ interface SwarmVote {
 interface HumanVoter {
   nullifierHash: string;
   twitterHandle?: string;
+  voteDirection: "up" | "down";
 }
 
 interface ForumPost {
@@ -86,7 +87,7 @@ export default function Forum() {
   const [error, setError] = useState<string | null>(null);
   const [myNullifier, setMyNullifier] = useState<string | null>(null);
   const [upvoteNullifier, setUpvoteNullifier] = useState<string | null>(null);
-  const [sort, setSort] = useState<SortOption>("recent");
+  const [sort, setSort] = useState<SortOption>("humans");
   const [instructionsOpen, setInstructionsOpen] = useState(true);
   const [pendingVote, setPendingVote] = useState<{
     postId: string;
@@ -202,22 +203,43 @@ export default function Forum() {
         localStorage.setItem(UPVOTE_NULLIFIER_KEY, result.nullifier_hash);
         setUpvoteNullifier(result.nullifier_hash);
 
-        // Update the post in state
+        // Update the post in state including humanVoters
         setPosts((prev) =>
-          prev.map((p) =>
-            p.id === pendingVote.postId
-              ? {
-                  ...p,
-                  upvoteCount: data.upvoteCount,
-                  downvoteCount: data.downvoteCount,
-                  humanUpvoteCount: data.humanUpvoteCount,
-                  humanDownvoteCount: data.humanDownvoteCount,
-                  agentUpvoteCount: data.agentUpvoteCount,
-                  hasHumanUpvoted: pendingVote.direction === "up",
-                  hasHumanDownvoted: pendingVote.direction === "down",
-                }
-              : p,
-          ),
+          prev.map((p) => {
+            if (p.id !== pendingVote.postId) return p;
+
+            // Update humanVoters array
+            const existingVoters = p.humanVoters || [];
+            const voterIndex = existingVoters.findIndex(
+              (v) => v.nullifierHash === result.nullifier_hash
+            );
+
+            let newHumanVoters: HumanVoter[];
+            if (voterIndex >= 0) {
+              // Update existing voter's direction
+              newHumanVoters = existingVoters.map((v, i) =>
+                i === voterIndex ? { ...v, voteDirection: pendingVote.direction } : v
+              );
+            } else {
+              // Add new voter
+              newHumanVoters = [
+                ...existingVoters,
+                { nullifierHash: result.nullifier_hash, voteDirection: pendingVote.direction },
+              ];
+            }
+
+            return {
+              ...p,
+              upvoteCount: data.upvoteCount,
+              downvoteCount: data.downvoteCount,
+              humanUpvoteCount: data.humanUpvoteCount,
+              humanDownvoteCount: data.humanDownvoteCount,
+              agentUpvoteCount: data.agentUpvoteCount,
+              humanVoters: newHumanVoters,
+              hasHumanUpvoted: pendingVote.direction === "up",
+              hasHumanDownvoted: pendingVote.direction === "down",
+            };
+          }),
         );
       } else {
         console.error("Vote failed:", data.error);
@@ -247,22 +269,43 @@ export default function Forum() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Update the post in state
+        // Update the post in state including humanVoters
         setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId
-              ? {
-                  ...p,
-                  upvoteCount: data.upvoteCount,
-                  downvoteCount: data.downvoteCount,
-                  humanUpvoteCount: data.humanUpvoteCount,
-                  humanDownvoteCount: data.humanDownvoteCount,
-                  agentUpvoteCount: data.agentUpvoteCount,
-                  hasHumanUpvoted: direction === "up",
-                  hasHumanDownvoted: direction === "down",
-                }
-              : p,
-          ),
+          prev.map((p) => {
+            if (p.id !== postId) return p;
+
+            // Update humanVoters array
+            const existingVoters = p.humanVoters || [];
+            const voterIndex = existingVoters.findIndex(
+              (v) => v.nullifierHash === upvoteNullifier
+            );
+
+            let newHumanVoters: HumanVoter[];
+            if (voterIndex >= 0) {
+              // Update existing voter's direction
+              newHumanVoters = existingVoters.map((v, i) =>
+                i === voterIndex ? { ...v, voteDirection: direction } : v
+              );
+            } else {
+              // Add new voter
+              newHumanVoters = [
+                ...existingVoters,
+                { nullifierHash: upvoteNullifier, voteDirection: direction },
+              ];
+            }
+
+            return {
+              ...p,
+              upvoteCount: data.upvoteCount,
+              downvoteCount: data.downvoteCount,
+              humanUpvoteCount: data.humanUpvoteCount,
+              humanDownvoteCount: data.humanDownvoteCount,
+              agentUpvoteCount: data.agentUpvoteCount,
+              humanVoters: newHumanVoters,
+              hasHumanUpvoted: direction === "up",
+              hasHumanDownvoted: direction === "down",
+            };
+          }),
         );
       } else {
         console.error("Vote failed:", data.error);
@@ -710,16 +753,19 @@ function PostCard({
 
         {/* Abbreviated breakdown */}
         <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1">
-          <div
-            className="flex items-center gap-1.5"
-            title="Verified human upvotes"
-          >
+          <div className="relative group flex items-center gap-1.5 cursor-default">
             <Image src="/verified_human.svg" alt="" width={18} height={18} />
-            <span className="font-medium">{post.humanUpvoteCount}</span>
+            <span className="font-medium">{post.humanVoters?.length || 0}</span>
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Verified humans
+            </div>
           </div>
-          <div className="flex items-center gap-1.5" title="Agent upvotes">
+          <div className="relative group flex items-center gap-1.5 cursor-default">
             <Image src="/logo.png" alt="" width={18} height={18} />
-            <span className="font-medium">{post.agentSwarmCount}</span>
+            <span className="font-medium">{post.agentUpvoteCount}</span>
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Agents
+            </div>
           </div>
         </div>
       </div>
@@ -800,10 +846,10 @@ function PostCard({
                     height={24}
                   />
                   <span className="text-2xl font-bold text-gray-900">
-                    {post.humanUpvoteCount}
+                    {post.humanVoters?.length || 0}
                   </span>
                   <span className="text-sm text-gray-500">
-                    Human{post.humanUpvoteCount !== 1 ? "s" : ""}
+                    Human{(post.humanVoters?.length || 0) !== 1 ? "s" : ""}
                   </span>
                 </div>
 
@@ -815,8 +861,21 @@ function PostCard({
                         <Link
                           key={voter.nullifierHash}
                           href={`/human/${encodeURIComponent(voter.nullifierHash)}`}
-                          className="px-2 py-1 rounded bg-white border border-gray-200 hover:bg-gray-100 transition-colors text-sm"
+                          className={`px-2 py-1 rounded bg-white border hover:bg-gray-100 transition-colors text-sm flex items-center gap-1 ${
+                            voter.voteDirection === "up"
+                              ? "border-red-200"
+                              : "border-blue-200"
+                          }`}
                         >
+                          {voter.voteDirection === "up" ? (
+                            <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M5 15l7-7 7 7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M19 9l-7 7-7-7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
                           {voter.twitterHandle ? (
                             <span className="text-blue-500 font-medium">
                               @{voter.twitterHandle}

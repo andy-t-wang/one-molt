@@ -232,6 +232,7 @@ export interface SwarmVote {
 export interface HumanVoter {
   nullifierHash: string
   twitterHandle?: string
+  voteDirection: 'up' | 'down'
 }
 
 export interface ForumPostResponse {
