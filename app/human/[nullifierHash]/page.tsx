@@ -205,7 +205,7 @@ export default function HumanGraph() {
               {myNullifier && (
                 <Link
                   href={`/human/${encodeURIComponent(myNullifier)}`}
-                  className={`text-sm font-medium ${myNullifier === nullifierHash ? "text-red-500" : "text-red-500 hover:text-red-400"}`}
+                  className="text-sm text-red-500 hover:text-red-400 font-medium"
                 >
                   My Swarm
                 </Link>
