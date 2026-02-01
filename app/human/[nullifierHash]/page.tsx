@@ -575,23 +575,22 @@ export default function HumanGraph() {
                     key={molt.publicKey}
                     className="bg-gray-50 border border-gray-200 rounded-xl p-4"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-dashed border-green-500/50 text-green-600"
-                          style={{
-                            background: "rgba(34, 197, 94, 0.1)",
-                          }}
-                        >
-                          <span className="font-bold text-sm">{index + 1}</span>
-                        </div>
-                        <div>
-                          <div className="font-mono text-sm text-gray-700">
-                            {truncateKey(molt.publicKey, 16)}
-                          </div>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center border-2 border-dashed border-green-500/50 text-green-600"
+                        style={{
+                          background: "rgba(34, 197, 94, 0.1)",
+                        }}
+                      >
+                        <span className="font-bold text-sm">{index + 1}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-mono text-sm text-gray-700 truncate">
+                          <span className="sm:hidden">{truncateKey(molt.publicKey, 8)}</span>
+                          <span className="hidden sm:inline">{truncateKey(molt.publicKey, 16)}</span>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="flex-shrink-0 text-right">
                         <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
                           Verified
                         </span>
