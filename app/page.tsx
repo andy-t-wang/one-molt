@@ -290,8 +290,8 @@ export default function Home() {
             Check Molt Verification
           </h2>
           <p className="text-gray-600 text-center mb-6">
-            Enter a <strong className="text-gray-900">public key</strong> or
-            device ID to verify if a molt is registered
+            Enter a Molt <strong className="text-gray-900">public key</strong>{" "}
+            or device ID to verify if a molt is registered
           </p>
 
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
