@@ -23,15 +23,25 @@ export default async function Image({ params }: Props) {
   let isVerified = false
 
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    // Always use production URL for OG images
+    const baseUrl = 'https://onemolt.ai'
 
-    const response = await fetch(
-      `${baseUrl}/api/v1/molt/${encodeURIComponent(decodedKey)}`,
-      { cache: 'no-store' }
-    )
+    const apiUrl = `${baseUrl}/api/v1/molt/${encodeURIComponent(decodedKey)}`
+    console.log('OG Image fetching from:', apiUrl)
+
+    const response = await fetch(apiUrl, {
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+
+    if (!response.ok) {
+      console.error('OG Image API response not ok:', response.status, response.statusText)
+    }
+
     moltData = await response.json()
+    console.log('OG Image molt data verified:', moltData.verified, 'worldId:', moltData.worldId?.verified)
 
     if (moltData.verified && moltData.worldId?.verified) {
       isVerified = true

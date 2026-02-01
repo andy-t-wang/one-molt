@@ -211,6 +211,48 @@ export default function RegisterPage({ params }: PageProps) {
     );
   }
 
+  // Render verifying state
+  if (status === "verifying") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md p-8 bg-white rounded-lg shadow-md">
+          <div className="text-center">
+            <div className="relative mx-auto mb-6 w-20 h-20">
+              {/* Outer spinning ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 animate-spin"></div>
+              {/* Inner logo */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Image
+                  src="/logo.png"
+                  alt="OneMolt"
+                  width={40}
+                  height={40}
+                  className="opacity-80"
+                />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Verifying...
+            </h1>
+            <p className="text-gray-600 mb-4">
+              Please wait while we verify your WorldID proof
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                <span className="font-medium">Don&apos;t close this page</span>
+                <br />
+                <span className="text-yellow-700">
+                  This usually takes a few seconds
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Render expired state
   if (status === "expired") {
     return (
@@ -300,7 +342,7 @@ export default function RegisterPage({ params }: PageProps) {
                     </p>
                     <p className="text-sm text-gray-900 capitalize">
                       {registration.verificationLevel === "face"
-                        ? "Face (Biometric)"
+                        ? "Face"
                         : "Device"}
                     </p>
                   </div>
