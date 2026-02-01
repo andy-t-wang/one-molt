@@ -19,7 +19,8 @@ export default function Home() {
   const [searching, setSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<MoltStatus | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [installMethod, setInstallMethod] = useState<"claw" | "manual">("claw");
+  const [installMethod, setInstallMethod] = useState<"claw" | "manual">("manual");
+  const [copiedInstall, setCopiedInstall] = useState(false);
   const [myNullifier, setMyNullifier] = useState<string | null>(null);
 
   useEffect(() => {
@@ -148,16 +149,6 @@ export default function Home() {
           {/* Method Switcher */}
           <div className="flex rounded-lg bg-gray-800 p-1 mb-4">
             <button
-              onClick={() => setInstallMethod("claw")}
-              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                installMethod === "claw"
-                  ? "bg-red-500 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Via Claw
-            </button>
-            <button
               onClick={() => setInstallMethod("manual")}
               className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 installMethod === "manual"
@@ -167,17 +158,42 @@ export default function Home() {
             >
               Manual
             </button>
+            <button
+              onClick={() => setInstallMethod("claw")}
+              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                installMethod === "claw"
+                  ? "bg-red-500 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Via Claw
+            </button>
           </div>
 
-          <div className="bg-gray-800 rounded-lg p-3 font-mono text-sm text-red-400">
-            {installMethod === "claw" ? (
-              <span>claw install andy-t-wang/one-molt</span>
-            ) : (
-              <span>
-                Read https://onemolt.ai/skill.md and follow the instructions to
-                verify your molt.
-              </span>
-            )}
+          <div className="bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-3">
+            <code className="font-mono text-sm text-red-400">
+              {installMethod === "claw" ? (
+                <span>claw install andy-t-wang/one-molt</span>
+              ) : (
+                <span>
+                  Read https://onemolt.ai/skill.md and follow the instructions to
+                  verify your molt.
+                </span>
+              )}
+            </code>
+            <button
+              onClick={() => {
+                const text = installMethod === "claw"
+                  ? "claw install andy-t-wang/one-molt"
+                  : "Read https://onemolt.ai/skill.md and follow the instructions to verify your molt.";
+                navigator.clipboard.writeText(text);
+                setCopiedInstall(true);
+                setTimeout(() => setCopiedInstall(false), 2000);
+              }}
+              className="flex-shrink-0 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium rounded transition-colors"
+            >
+              {copiedInstall ? "Copied!" : "Copy"}
+            </button>
           </div>
 
           <div className="mt-4 text-sm text-gray-300 space-y-1">
