@@ -342,7 +342,7 @@ export default function RegisterPage({ params }: PageProps) {
                     </p>
                     <p className="text-sm text-gray-900 capitalize">
                       {registration.verificationLevel === "face"
-                        ? "Face"
+                        ? "Selfie"
                         : "Device"}
                     </p>
                   </div>

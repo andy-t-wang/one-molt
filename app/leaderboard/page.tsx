@@ -29,8 +29,12 @@ export default function Leaderboard() {
   const [myNullifier, setMyNullifier] = useState<string | null>(null);
 
   // Twitter verification state
-  const [myTwitterClaimed, setMyTwitterClaimed] = useState<boolean | null>(null);
-  const [twitterStep, setTwitterStep] = useState<"idle" | "tweeting" | "pasting">("idle");
+  const [myTwitterClaimed, setMyTwitterClaimed] = useState<boolean | null>(
+    null,
+  );
+  const [twitterStep, setTwitterStep] = useState<
+    "idle" | "tweeting" | "pasting"
+  >("idle");
   const [tweetUrl, setTweetUrl] = useState("");
   const [twitterError, setTwitterError] = useState<string | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
@@ -51,7 +55,7 @@ export default function Leaderboard() {
           // Check if user's Twitter is already claimed from leaderboard data
           if (cached) {
             const myEntry = result.entries.find(
-              (e: LeaderboardEntry) => e.nullifierHash === cached
+              (e: LeaderboardEntry) => e.nullifierHash === cached,
             );
             setMyTwitterClaimed(myEntry?.twitterHandle ? true : false);
           }
@@ -76,7 +80,7 @@ export default function Leaderboard() {
 
     try {
       const response = await fetch(
-        `/api/v1/claim-twitter?nullifier=${encodeURIComponent(myNullifier)}&code=true`
+        `/api/v1/claim-twitter?nullifier=${encodeURIComponent(myNullifier)}&code=true`,
       );
       const result = await response.json();
 
@@ -255,7 +259,11 @@ export default function Leaderboard() {
                   disabled={twitterLoading}
                   className="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 disabled:bg-gray-300 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                   {twitterLoading ? "Loading..." : "Verify Twitter"}
@@ -401,24 +409,14 @@ export default function Leaderboard() {
                       </div>
                     </div>
 
-                    {/* Verification breakdown */}
-                    <div className="flex-shrink-0 flex gap-2">
-                      {entry.verificationLevels.face > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded text-xs">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="font-medium text-green-700">
-                            {entry.verificationLevels.face}
-                          </span>
-                        </div>
-                      )}
-                      {entry.verificationLevels.device > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded text-xs">
-                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                          <span className="font-medium text-blue-700">
-                            {entry.verificationLevels.device}
-                          </span>
-                        </div>
-                      )}
+                    {/* Molt count badge */}
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded text-xs">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="font-medium text-green-700">
+                          {entry.moltCount} {entry.moltCount === 1 ? "molt" : "molts"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -428,7 +426,13 @@ export default function Leaderboard() {
         ) : (
           <div className="text-center py-24">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Image src="/logo.png" alt="No molts" width={32} height={32} className="opacity-50" />
+              <Image
+                src="/logo.png"
+                alt="No molts"
+                width={32}
+                height={32}
+                className="opacity-50"
+              />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               No Swarms Yet
@@ -442,20 +446,6 @@ export default function Leaderboard() {
             >
               Get Verified
             </Link>
-          </div>
-        )}
-
-        {/* Legend */}
-        {data && data.entries.length > 0 && (
-          <div className="flex justify-center gap-6 mt-8 pt-6 border-t border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-sm text-gray-600">Face Verified</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-sm text-gray-600">Device Verified</span>
-            </div>
           </div>
         )}
 

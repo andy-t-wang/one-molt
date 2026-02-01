@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'edge'
 export const alt = 'Verified Molt on OneMolt'
@@ -16,46 +17,43 @@ export default async function Image({ params }: Props) {
   const { publicKey } = await params
   const decodedKey = decodeURIComponent(publicKey)
 
-  // Fetch molt data to get swarm info
-  let moltData = null
+  // Query database directly for OG images (more reliable than HTTP fetch in edge)
   let swarmCount = 1
   let verificationLevel = 'face'
   let isVerified = false
 
   try {
-    // Always use production URL for OG images
-    const baseUrl = 'https://onemolt.ai'
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    const apiUrl = `${baseUrl}/api/v1/molt/${encodeURIComponent(decodedKey)}`
-    console.log('OG Image fetching from:', apiUrl)
+    if (supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const response = await fetch(apiUrl, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
+      // Look up by public key
+      const { data: registration } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('public_key', decodedKey)
+        .eq('verified', true)
+        .eq('active', true)
+        .single()
 
-    if (!response.ok) {
-      console.error('OG Image API response not ok:', response.status, response.statusText)
-    }
+      if (registration) {
+        isVerified = true
+        verificationLevel = registration.verification_level || 'face'
 
-    moltData = await response.json()
-    console.log('OG Image molt data verified:', moltData.verified, 'worldId:', moltData.worldId?.verified)
+        // Get swarm count
+        if (registration.nullifier_hash) {
+          const { data: swarmMolts } = await supabase
+            .from('registrations')
+            .select('id')
+            .eq('nullifier_hash', registration.nullifier_hash)
+            .eq('verified', true)
+            .eq('active', true)
 
-    if (moltData.verified && moltData.worldId?.verified) {
-      isVerified = true
-      verificationLevel = moltData.worldId.verificationLevel || 'face'
-
-      // Fetch swarm count if we have nullifier hash
-      if (moltData.worldId.nullifierHash) {
-        const swarmResponse = await fetch(
-          `${baseUrl}/api/v1/molt/${encodeURIComponent(moltData.worldId.nullifierHash)}`,
-          { cache: 'no-store' }
-        )
-        const swarmData = await swarmResponse.json()
-        if (swarmData.queryType === 'nullifier_hash' && swarmData.molts) {
-          swarmCount = swarmData.molts.length
+          if (swarmMolts) {
+            swarmCount = swarmMolts.length
+          }
         }
       }
     }

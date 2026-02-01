@@ -211,16 +211,8 @@ export default function VerifyPage({ params }: PageProps) {
 
             {/* Compact Details */}
             <div className="flex flex-wrap justify-center gap-2 mb-4">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  moltData.worldId?.verificationLevel === "face"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-blue-100 text-blue-700"
-                }`}
-              >
-                {moltData.worldId?.verificationLevel === "face"
-                  ? "Face Verified"
-                  : "Device Verified"}
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                Verified
               </span>
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                 {moltData.worldId?.registeredAt &&
@@ -243,130 +235,96 @@ export default function VerifyPage({ params }: PageProps) {
 
           {/* Swarm Graph */}
           {swarmData && swarmData.molts.length > 0 && (
-            <div className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-xl p-6 mb-4 overflow-hidden relative">
-              {/* Animated background effect */}
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-0 left-1/4 w-64 h-64 bg-red-500 rounded-full blur-3xl animate-pulse"></div>
+            <div
+              className="rounded-2xl shadow-xl p-6 mb-4 overflow-hidden"
+              style={{
+                backgroundColor: "#0d0d0d",
+                backgroundImage:
+                  "radial-gradient(circle, #333 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            >
+              <div className="flex flex-col items-center py-4">
+                {/* Human node */}
                 <div
-                  className="absolute bottom-0 right-1/4 w-48 h-48 bg-purple-500 rounded-full blur-3xl animate-pulse"
-                  style={{ animationDelay: "1s" }}
-                ></div>
-              </div>
-
-              <div className="relative z-10">
-                <h2 className="text-lg font-bold text-center mb-6 text-white">
-                  Molt Swarm
-                  <span className="text-gray-400 font-normal ml-2">
-                    ({swarmData.molts.length})
-                  </span>
-                </h2>
-
-                <div className="flex flex-col items-center">
-                  {/* Human at top */}
-                  <div className="relative mb-4">
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
-                    <div className="relative w-20 h-20 bg-gradient-to-br from-red-500 via-red-600 to-orange-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-red-400/30">
-                      <svg
-                        className="w-10 h-10 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-gray-400 mb-4 font-medium tracking-wider uppercase">
-                    Human
-                  </div>
-
-                  {/* Connection lines */}
+                  className="relative w-20 h-20 rounded-2xl flex items-center justify-center mb-2"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
+                    border: "2px dashed #ef4444",
+                    boxShadow: "0 0 30px rgba(239, 68, 68, 0.2)",
+                  }}
+                >
                   <svg
-                    className="w-full h-12"
-                    viewBox="0 0 300 50"
-                    preserveAspectRatio="xMidYMid meet"
+                    className="w-10 h-10 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <defs>
-                      <linearGradient
-                        id="lineGradient"
-                        x1="0%"
-                        y1="0%"
-                        x2="0%"
-                        y2="100%"
-                      >
-                        <stop offset="0%" stopColor="#ef4444" stopOpacity="1" />
-                        <stop
-                          offset="100%"
-                          stopColor="#8b5cf6"
-                          stopOpacity="0.5"
-                        />
-                      </linearGradient>
-                    </defs>
-                    {swarmData.molts.map((molt, index) => {
-                      const totalMolts = swarmData.molts.length;
-                      const spacing =
-                        totalMolts === 1 ? 150 : 260 / (totalMolts - 1);
-                      const x = totalMolts === 1 ? 150 : 20 + index * spacing;
-                      const isCurrentMolt =
-                        molt.publicKey === moltData.publicKey;
-                      return (
-                        <path
-                          key={index}
-                          d={`M150,0 Q150,25 ${x},50`}
-                          fill="none"
-                          stroke={
-                            isCurrentMolt ? "#ef4444" : "url(#lineGradient)"
-                          }
-                          strokeWidth={isCurrentMolt ? "3" : "2"}
-                          strokeOpacity={isCurrentMolt ? "1" : "0.6"}
-                          className={isCurrentMolt ? "" : "animate-pulse"}
-                          style={{ animationDelay: `${index * 0.2}s` }}
-                        />
-                      );
-                    })}
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
+                  <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0d0d0d]"></div>
+                </div>
 
-                  {/* Molts row */}
-                  <div className="flex flex-wrap justify-center gap-4 mt-2">
-                    {swarmData.molts.map((molt) => {
-                      const isCurrentMolt =
-                        molt.publicKey === moltData.publicKey;
-                      return (
+                {/* Connection lines */}
+                <svg
+                  className="w-full h-16"
+                  viewBox="0 0 300 60"
+                  preserveAspectRatio="xMidYMid meet"
+                >
+                  {swarmData.molts.map((molt, index) => {
+                    const totalMolts = swarmData.molts.length;
+                    const spacing =
+                      totalMolts === 1 ? 150 : 240 / (totalMolts - 1);
+                    const x = totalMolts === 1 ? 150 : 30 + index * spacing;
+                    const isCurrentMolt = molt.publicKey === moltData.publicKey;
+                    return (
+                      <path
+                        key={index}
+                        d={`M150,0 Q150,30 ${x},60`}
+                        fill="none"
+                        stroke="#ef4444"
+                        strokeWidth="2"
+                        strokeDasharray="2 6"
+                        strokeLinecap="round"
+                        strokeOpacity={isCurrentMolt ? "0.8" : "0.4"}
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* Molts row */}
+                <div className="flex flex-wrap justify-center gap-6">
+                  {swarmData.molts.map((molt) => {
+                    const isCurrentMolt = molt.publicKey === moltData.publicKey;
+                    return (
+                      <div
+                        key={molt.publicKey}
+                        className="flex flex-col items-center"
+                      >
                         <div
-                          key={molt.publicKey}
-                          className="flex flex-col items-center"
+                          className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105 ${
+                            isCurrentMolt
+                              ? "ring-2 ring-red-500 ring-offset-2 ring-offset-[#0d0d0d]"
+                              : ""
+                          }`}
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
+                            border: "2px dashed #22c55e",
+                            boxShadow: "0 0 20px rgba(34, 197, 94, 0.15)",
+                          }}
+                          title={molt.publicKey}
                         >
-                          <div className="relative group">
-                            {isCurrentMolt && (
-                              <div className="absolute -inset-2 bg-gradient-to-r from-red-500 to-purple-500 rounded-full blur-md opacity-75 animate-pulse"></div>
-                            )}
-                            <div
-                              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 cursor-pointer ${
-                                isCurrentMolt
-                                  ? "bg-gradient-to-br from-red-500 via-purple-500 to-pink-500 ring-2 ring-white/50"
-                                  : "bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-600"
-                              }`}
-                              title={molt.publicKey}
-                            >
-                              <LobsterIcon className="w-8 h-8 text-white" />
-                            </div>
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-2 font-mono">
-                            {molt.publicKey.slice(0, 6)}...
-                          </span>
-                          {isCurrentMolt && (
-                            <span className="text-[10px] text-red-400 font-medium mt-1">
-                              This molt
-                            </span>
-                          )}
+                          <LobsterIcon className="w-7 h-7 text-white opacity-80" />
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="text-xs text-gray-400 mt-6 font-medium tracking-wider uppercase">
-                    Molts
-                  </div>
+                        {isCurrentMolt && (
+                          <span className="text-[10px] text-red-400 mt-2">
+                            This molt
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

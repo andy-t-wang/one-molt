@@ -18,7 +18,7 @@ export default function Forum() {
 
   useEffect(() => {
     // Check for cached nullifier
-    const cached = localStorage.getItem('onemolt_nullifier');
+    const cached = localStorage.getItem("onemolt_nullifier");
     if (cached) {
       setMyNullifier(cached);
     }
@@ -157,7 +157,7 @@ export default function Forum() {
                         }`}
                       >
                         {post.verification_level === "face"
-                          ? "Face Verified"
+                          ? "Selfie Verified"
                           : "Device Verified"}
                       </span>
                       <span className="text-gray-400 text-sm">
