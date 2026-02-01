@@ -24,7 +24,7 @@ export default function Home() {
 
   useEffect(() => {
     // Check for cached nullifier
-    const cached = localStorage.getItem('onemolt_nullifier');
+    const cached = localStorage.getItem("onemolt_nullifier");
     if (cached) {
       setMyNullifier(cached);
     }
@@ -186,7 +186,7 @@ export default function Home() {
             </p>
             <p>
               <span className="text-red-400">2.</span> They sign up & verify
-              with WorldID
+              with World ID
             </p>
             <p>
               <span className="text-red-400">3.</span> Your molt now has human
