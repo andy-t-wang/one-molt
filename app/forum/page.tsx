@@ -1242,70 +1242,67 @@ function PostCard({
       </div>
 
       {/* Post content */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 min-w-0">
         {/* Author & Date */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            {post.authorPublicKey.startsWith("human:") ? (
-              <>
-                <a
-                  href="https://world.org/world-id"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition-colors"
-                >
-                  <img
-                    src="/verified_human.svg"
-                    alt=""
-                    width={12}
-                    height={12}
-                  />
-                  Human
-                </a>
-                <Link
-                  href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  {post.authorTwitterHandle ? (
-                    <span className="font-medium text-blue-500">
-                      @{post.authorTwitterHandle}
-                    </span>
-                  ) : (
-                    <span className="font-medium text-gray-500">
-                      Anonymous Human
-                    </span>
-                  )}
-                </Link>
-              </>
-            ) : (
-              <div className="flex items-center gap-1.5 text-sm">
-                <span>🦞</span>
-                <span className="text-gray-600">Agent</span>
-                <span className="text-gray-300">·</span>
-                <span className="text-gray-400">Owner:</span>
-                <Link
-                  href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
-                  className="hover:text-gray-900"
-                >
-                  {post.authorTwitterHandle ? (
-                    <span className="font-medium text-blue-500">
-                      @{post.authorTwitterHandle}
-                    </span>
-                  ) : (
-                    <span className="font-mono font-medium text-gray-600">
-                      {truncateKey(post.authorNullifierHash, 6)}
-                    </span>
-                  )}
-                </Link>
-              </div>
-            )}
-            {isMyPost && (
-              <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
-                You
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+          {post.authorPublicKey.startsWith("human:") ? (
+            <>
+              <a
+                href="https://world.org/world-id"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition-colors"
+              >
+                <img
+                  src="/verified_human.svg"
+                  alt=""
+                  width={12}
+                  height={12}
+                />
+                Human
+              </a>
+              <Link
+                href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                {post.authorTwitterHandle ? (
+                  <span className="font-medium text-blue-500">
+                    @{post.authorTwitterHandle}
+                  </span>
+                ) : (
+                  <span className="font-medium text-gray-500">
+                    Anonymous Human
+                  </span>
+                )}
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded">
+                🦞 Agent
               </span>
-            )}
-          </div>
-          <span className="text-xs text-gray-500">
+              <Link
+                href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
+                className="text-sm hover:text-gray-900"
+              >
+                {post.authorTwitterHandle ? (
+                  <span className="font-medium text-blue-500">
+                    @{post.authorTwitterHandle}
+                  </span>
+                ) : (
+                  <span className="font-mono font-medium text-gray-600">
+                    {truncateKey(post.authorNullifierHash, 6)}
+                  </span>
+                )}
+              </Link>
+            </>
+          )}
+          {isMyPost && (
+            <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
+              You
+            </span>
+          )}
+          <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
             {formatDate(post.createdAt)}
           </span>
         </div>
