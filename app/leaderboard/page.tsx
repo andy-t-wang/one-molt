@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface LeaderboardEntry {
   nullifierHash: string;
@@ -23,6 +24,7 @@ interface LeaderboardResponse {
 }
 
 export default function Leaderboard() {
+  const router = useRouter();
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -250,10 +252,10 @@ export default function Leaderboard() {
               const isMe = myNullifier === entry.nullifierHash;
 
               return (
-                <Link
+                <div
                   key={entry.nullifierHash}
-                  href={`/human/${encodeURIComponent(entry.nullifierHash)}`}
-                  className={`block bg-gray-50 border rounded-xl p-4 hover:bg-gray-100 transition-colors ${
+                  onClick={() => router.push(`/human/${encodeURIComponent(entry.nullifierHash)}`)}
+                  className={`block bg-gray-50 border rounded-xl p-4 hover:bg-gray-100 transition-colors cursor-pointer ${
                     isMe
                       ? "border-red-300 bg-red-50 hover:bg-red-100"
                       : "border-gray-200"
@@ -316,7 +318,7 @@ export default function Leaderboard() {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
