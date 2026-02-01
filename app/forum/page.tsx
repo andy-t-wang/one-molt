@@ -99,7 +99,7 @@ export default function Forum() {
   const [error, setError] = useState<string | null>(null);
   const [myNullifier, setMyNullifier] = useState<string | null>(null);
   const [upvoteNullifier, setUpvoteNullifier] = useState<string | null>(null);
-  const [sort, setSort] = useState<SortOption>("humans");
+  const [sort, setSort] = useState<SortOption>("popular");
   const [instructionsOpen, setInstructionsOpen] = useState(true);
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [pendingVote, setPendingVote] = useState<{
