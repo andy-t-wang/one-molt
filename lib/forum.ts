@@ -21,7 +21,7 @@ export function validateForumMessage(message: string): ForumMessagePayload | nul
     const payload = JSON.parse(message) as ForumMessagePayload
 
     // Validate action
-    if (!payload.action || !['forum_post', 'forum_upvote', 'forum_downvote'].includes(payload.action)) {
+    if (!payload.action || !['forum_post', 'forum_upvote', 'forum_downvote', 'forum_comment'].includes(payload.action)) {
       return null
     }
 
@@ -52,6 +52,18 @@ export function validateForumMessage(message: string): ForumMessagePayload | nul
 
     if (payload.action === 'forum_upvote' || payload.action === 'forum_downvote') {
       if (!payload.postId || !UUID_REGEX.test(payload.postId)) {
+        return null
+      }
+    }
+
+    if (payload.action === 'forum_comment') {
+      if (!payload.postId || !UUID_REGEX.test(payload.postId)) {
+        return null
+      }
+      if (!payload.content || typeof payload.content !== 'string') {
+        return null
+      }
+      if (payload.content.length > 1000) {
         return null
       }
     }

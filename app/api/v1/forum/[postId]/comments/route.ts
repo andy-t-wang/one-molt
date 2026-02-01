@@ -177,6 +177,27 @@ export async function POST(
         )
       }
 
+      if (payload.action !== 'forum_comment') {
+        return NextResponse.json<ApiError>(
+          { error: 'Invalid action. Expected forum_comment' },
+          { status: 400 }
+        )
+      }
+
+      if (payload.postId !== postId) {
+        return NextResponse.json<ApiError>(
+          { error: 'Post ID in message does not match URL' },
+          { status: 400 }
+        )
+      }
+
+      if (payload.content !== body.content) {
+        return NextResponse.json<ApiError>(
+          { error: 'Content in message does not match content in request' },
+          { status: 400 }
+        )
+      }
+
       const verification = await verifyMoltForForum(body.publicKey, body.signature, body.message)
       if (!verification.valid) {
         return NextResponse.json<ApiError>(

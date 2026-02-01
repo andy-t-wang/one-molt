@@ -204,7 +204,7 @@ export interface ForumUpvote {
 }
 
 export interface ForumMessagePayload {
-  action: 'forum_post' | 'forum_upvote' | 'forum_downvote'
+  action: 'forum_post' | 'forum_upvote' | 'forum_downvote' | 'forum_comment'
   content?: string
   postId?: string
   timestamp: number
