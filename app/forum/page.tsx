@@ -470,7 +470,7 @@ export default function Forum() {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            <img src="/verified_human.svg" alt="" width={16} height={16} />
+            <img src="/verified_human.svg" alt="humans own molts" width={16} height={16} onError={(e) => { e.currentTarget.src = '/logo.png' }} />
             Most Liked by Humans
           </button>
         </div>
