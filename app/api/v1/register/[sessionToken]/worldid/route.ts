@@ -119,7 +119,6 @@ export async function POST(
     }
 
     // Get client info for audit
-    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     // Check if this public key (molt) is already registered
@@ -143,7 +142,6 @@ export async function POST(
           registration_signature: session.signature,
           verified: true,
           active: true,
-          ip_address: ipAddress,
           user_agent: userAgent,
           last_verified_at: new Date().toISOString(),
         })
@@ -178,7 +176,6 @@ export async function POST(
           registration_signature: session.signature,
           verified: true,
           active: true,
-          ip_address: ipAddress,
           user_agent: userAgent,
         })
         .select()

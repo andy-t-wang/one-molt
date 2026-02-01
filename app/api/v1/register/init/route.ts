@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
     // Get client info for audit
-    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     // Create registration session
@@ -100,7 +99,6 @@ export async function POST(request: NextRequest) {
         message: body.message,
         status: 'pending',
         expires_at: expiresAt.toISOString(),
-        ip_address: ipAddress,
         user_agent: userAgent,
       })
 

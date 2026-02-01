@@ -98,7 +98,6 @@ export async function POST(request: NextRequest) {
     const isValid = verifyEd25519Signature(body.message, body.signature, publicKey)
 
     // Log verification attempt
-    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     await supabase.from('verification_logs').insert({
@@ -108,7 +107,6 @@ export async function POST(request: NextRequest) {
       signature: body.signature,
       verified: isValid,
       verification_method: 'signature',
-      ip_address: ipAddress,
       user_agent: userAgent,
       registration_id: registration?.id || null,
     })

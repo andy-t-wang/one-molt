@@ -123,7 +123,6 @@ export interface Registration {
   last_verified_at: string
   verified: boolean
   active: boolean
-  ip_address?: string
   user_agent?: string
 }
 
@@ -138,7 +137,6 @@ export interface RegistrationSession {
   status: 'pending' | 'worldid_verified' | 'completed' | 'expired' | 'failed'
   created_at: string
   expires_at: string
-  ip_address?: string
   user_agent?: string
 }
 
@@ -151,7 +149,6 @@ export interface VerificationLog {
   verified: boolean
   verification_method: 'signature' | 'worldid' | 'both'
   timestamp: string
-  ip_address?: string
   user_agent?: string
   registration_id?: string
 }
