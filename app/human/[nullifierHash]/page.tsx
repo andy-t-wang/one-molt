@@ -259,49 +259,11 @@ export default function HumanGraph() {
               <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
               <div
-                className="relative w-full max-w-3xl mx-auto"
-                style={{ height: "380px" }}
+                className="relative w-full max-w-3xl mx-auto flex flex-col items-center"
+                style={{ minHeight: "320px" }}
               >
-                {/* SVG for connection lines */}
-                <svg
-                  className="absolute inset-0 w-full h-full"
-                  viewBox="-300 -100 600 400"
-                  preserveAspectRatio="xMidYMid meet"
-                >
-                  <defs>
-                    <linearGradient
-                      id="lineGradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="0%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stopColor="#ef4444" stopOpacity="0.6" />
-                      <stop
-                        offset="100%"
-                        stopColor="#ef4444"
-                        stopOpacity="0.2"
-                      />
-                    </linearGradient>
-                  </defs>
-                  {data.molts.map((_, index) => {
-                    const pos = getMoltRowPosition(index, data.molts.length);
-                    return (
-                      <path
-                        key={index}
-                        d={`M 0 30 Q 0 ${30 + (pos.y - 30) / 2} ${pos.x} ${pos.y - 40}`}
-                        stroke="url(#lineGradient)"
-                        strokeWidth="2"
-                        strokeDasharray="2 6"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                    );
-                  })}
-                </svg>
-
                 {/* Center node - Human */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10">
+                <div className="z-10">
                   <div className="flex flex-col items-center">
                     {/* Node with dashed border */}
                     <div
@@ -330,8 +292,6 @@ export default function HumanGraph() {
                           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                         </svg>
                       </div>
-                      {/* Green status dot */}
-                      <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0d0d0d]"></div>
                     </div>
                     {/* Label */}
                     <div className="mt-3 text-center">
@@ -358,51 +318,68 @@ export default function HumanGraph() {
                   </div>
                 </div>
 
+                {/* Connection lines */}
+                <div className="flex justify-center py-4">
+                  <svg
+                    width={Math.max(200, data.molts.length * 100)}
+                    height="60"
+                    className="overflow-visible"
+                  >
+                    {data.molts.map((_, index) => {
+                      const totalMolts = data.molts.length;
+                      const spacing = totalMolts === 1 ? 0 : 80;
+                      const totalWidth = (totalMolts - 1) * spacing;
+                      const startX = totalMolts === 1 ? 100 : (Math.max(200, totalMolts * 100) - totalWidth) / 2;
+                      const x = startX + index * spacing;
+                      const centerX = Math.max(200, totalMolts * 100) / 2;
+                      return (
+                        <path
+                          key={index}
+                          d={`M ${centerX} 0 Q ${centerX} 30 ${x} 60`}
+                          stroke="#ef4444"
+                          strokeWidth="2"
+                          strokeDasharray="2 6"
+                          strokeLinecap="round"
+                          strokeOpacity="0.6"
+                          fill="none"
+                        />
+                      );
+                    })}
+                  </svg>
+                </div>
+
                 {/* Molt nodes */}
-                {data.molts.map((molt, index) => {
-                  const pos = getMoltRowPosition(index, data.molts.length);
-                  return (
-                    <div
-                      key={molt.publicKey}
-                      className="absolute z-10"
-                      style={{
-                        left: "50%",
-                        top: "0",
-                        transform: `translate(calc(-50% + ${pos.x}px), ${pos.y}px)`,
-                      }}
-                    >
-                      <div className="flex flex-col items-center">
-                        {/* Node with dotted border */}
+                <div className="flex justify-center gap-6 flex-wrap">
+                  {data.molts.map((molt) => (
+                    <div key={molt.publicKey} className="flex flex-col items-center">
+                      <div
+                        className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
+                          boxShadow: "0 0 30px rgba(34, 197, 94, 0.15)",
+                        }}
+                        title={molt.publicKey}
+                      >
                         <div
-                          className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+                          className="absolute inset-0 rounded-full pointer-events-none"
                           style={{
-                            background:
-                              "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
-                            boxShadow: "0 0 30px rgba(34, 197, 94, 0.15)",
+                            border: "2px dashed #22c55e",
+                            opacity: 0.7,
                           }}
-                          title={molt.publicKey}
-                        >
-                          {/* Dotted border */}
-                          <div
-                            className="absolute inset-0 rounded-full pointer-events-none"
-                            style={{
-                              border: "2px dashed #22c55e",
-                              opacity: 0.7,
-                            }}
-                          ></div>
-                          {/* Inner content */}
-                          <Image
-                            src="/logo.png"
-                            alt="Molt"
-                            width={32}
-                            height={32}
-                            className="opacity-80"
-                          />
-                        </div>
+                        ></div>
+                        <Image
+                          src="/logo.png"
+                          alt="Molt"
+                          width={40}
+                          height={40}
+                          className="rounded-full"
+                        />
                       </div>
+                      <span className="text-gray-400 text-sm mt-3">Molt</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
 
