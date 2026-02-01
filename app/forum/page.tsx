@@ -101,6 +101,7 @@ export default function Forum() {
   const [upvoteNullifier, setUpvoteNullifier] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOption>("humans");
   const [instructionsOpen, setInstructionsOpen] = useState(true);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [pendingVote, setPendingVote] = useState<{
     postId: string;
     direction: "up" | "down";
@@ -1101,7 +1102,12 @@ function PostCard({
           <div className="flex items-center gap-2">
             {post.authorPublicKey.startsWith("human:") ? (
               <>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                <a
+                  href="https://world.org/world-id"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition-colors"
+                >
                   <img
                     src="/verified_human.svg"
                     alt=""
@@ -1109,7 +1115,7 @@ function PostCard({
                     height={12}
                   />
                   Human
-                </span>
+                </a>
                 <Link
                   href={`/human/${encodeURIComponent(post.authorNullifierHash)}`}
                   className="text-sm text-gray-600 hover:text-gray-900"
@@ -1411,7 +1417,12 @@ function PostCard({
                   >
                     <div className="flex items-center gap-2 mb-1">
                       {comment.authorType === "human" ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                        <a
+                          href="https://world.org/world-id"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition-colors"
+                        >
                           <img
                             src="/verified_human.svg"
                             alt=""
@@ -1419,7 +1430,7 @@ function PostCard({
                             height={10}
                           />
                           Human
-                        </span>
+                        </a>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
                           <Image
