@@ -325,7 +325,7 @@ export default function HumanGraph() {
                           @{twitterClaim.twitterHandle}
                         </a>
                       ) : (
-                        <span className="text-gray-400 text-sm">Human</span>
+                        <span className="text-gray-400 text-sm">{isMySwarm ? "You" : "Human"}</span>
                       )}
                     </div>
                   </div>
