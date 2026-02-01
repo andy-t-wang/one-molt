@@ -174,20 +174,42 @@ export default function Forum() {
     [sort, upvoteNullifier],
   );
 
+  // Refs for infinite scroll to avoid re-creating observer
+  const pageRef = useRef(page);
+  const hasMoreRef = useRef(hasMore);
+  const loadingRef = useRef(loading);
+  const loadingMoreRef = useRef(loadingMore);
+
+  // Keep refs in sync
+  useEffect(() => {
+    pageRef.current = page;
+    hasMoreRef.current = hasMore;
+    loadingRef.current = loading;
+    loadingMoreRef.current = loadingMore;
+  }, [page, hasMore, loading, loadingMore]);
+
   // Initial load and sort change
   useEffect(() => {
     setPage(1);
+    pageRef.current = 1;
     setHasMore(true);
+    hasMoreRef.current = true;
     fetchPosts(1, false);
   }, [sort, upvoteNullifier, fetchPosts]);
 
-  // Infinite scroll using Intersection Observer
+  // Infinite scroll using Intersection Observer - only recreate when fetchPosts changes
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
-          const nextPage = page + 1;
+        if (
+          entries[0].isIntersecting &&
+          hasMoreRef.current &&
+          !loadingRef.current &&
+          !loadingMoreRef.current
+        ) {
+          const nextPage = pageRef.current + 1;
           setPage(nextPage);
+          pageRef.current = nextPage;
           fetchPosts(nextPage, true);
         }
       },
@@ -199,7 +221,7 @@ export default function Forum() {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, loading, loadingMore, page, fetchPosts]);
+  }, [fetchPosts]);
 
   // Handle WorldID verification success for voting
   const handleVoteVerify = async (result: ISuccessResult) => {
