@@ -61,23 +61,6 @@ export default function HumanGraph() {
 
     const fetchData = async () => {
       try {
-        // TEMP: Mock 50 molts for UI testing
-        const mockMolts = Array.from({ length: 50 }, (_, i) => ({
-          deviceId: `device-${i + 1}`,
-          publicKey: `MCowBQYDK2VwAyEA${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-          verificationLevel: "face",
-          registeredAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        }));
-        setData({
-          verified: true,
-          nullifierHash: nullifierHash,
-          molts: mockMolts,
-          queryType: "nullifier_hash" as const,
-        });
-        setLoading(false);
-        return;
-        // END TEMP
-
         const response = await fetch(
           `/api/v1/molt/${encodeURIComponent(nullifierHash)}`,
         );
