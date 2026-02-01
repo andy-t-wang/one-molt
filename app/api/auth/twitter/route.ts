@@ -32,11 +32,12 @@ export async function GET(request: NextRequest) {
     const { codeVerifier, codeChallenge } = generateCodeChallenge()
     const state = crypto.randomBytes(32).toString('hex')
 
-    // Build redirect URI
-    let baseUrl = request.headers.get('host') || 'onemolt.ai'
-    baseUrl = baseUrl.replace(/^www\./, '')
-    const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
-    const redirectUri = `${protocol}://${baseUrl}/api/auth/twitter/callback`
+    // Build redirect URI - must match EXACTLY what's registered in X developer portal
+    const host = request.headers.get('host') || ''
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
+    const redirectUri = isLocal
+      ? 'http://localhost:3000/api/auth/twitter/callback'
+      : 'https://onemolt.ai/api/auth/twitter/callback'
 
     // Twitter OAuth 2.0 authorization URL
     const authUrl = new URL('https://twitter.com/i/oauth2/authorize')
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(authUrl.toString())
 
     // Store PKCE code verifier, state, and nullifier in secure cookies
-    const isProduction = !baseUrl.includes('localhost')
+    const isProduction = !isLocal
 
     response.cookies.set('oauth_state', state, {
       httpOnly: true,

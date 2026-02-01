@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -43,6 +43,13 @@ export default function HumanGraph() {
   const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Canvas pan and zoom state
+  const graphContainerRef = useRef<HTMLDivElement>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+
   const isMySwarm = myNullifier === nullifierHash;
 
   useEffect(() => {
@@ -54,6 +61,23 @@ export default function HumanGraph() {
 
     const fetchData = async () => {
       try {
+        // TEMP: Mock 50 molts for UI testing
+        const mockMolts = Array.from({ length: 50 }, (_, i) => ({
+          deviceId: `device-${i + 1}`,
+          publicKey: `MCowBQYDK2VwAyEA${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
+          verificationLevel: "face",
+          registeredAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        }));
+        setData({
+          verified: true,
+          nullifierHash: nullifierHash,
+          molts: mockMolts,
+          queryType: "nullifier_hash" as const,
+        });
+        setLoading(false);
+        return;
+        // END TEMP
+
         const response = await fetch(
           `/api/v1/molt/${encodeURIComponent(nullifierHash)}`,
         );
@@ -102,6 +126,36 @@ export default function HumanGraph() {
     fetchTwitterClaim();
     fetchShortUrl();
   }, [nullifierHash]);
+
+  // Pan handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Only left click
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning) return;
+    setPanOffset({
+      x: e.clientX - panStart.x,
+      y: e.clientY - panStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPanning(false);
+  };
+
+  // Zoom handler
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom((prev) => Math.min(Math.max(prev * delta, 0.3), 3));
+  };
 
   const handleConnectTwitter = () => {
     setTwitterError(null);
@@ -199,144 +253,229 @@ export default function HumanGraph() {
           </div>
         ) : data ? (
           <>
-            {/* Graph Visualization - Dark theme with dotted grid */}
-            <div
-              className="relative rounded-2xl p-8 mb-8 overflow-hidden"
-              style={{
-                backgroundColor: "#0d0d0d",
-                backgroundImage:
-                  "radial-gradient(circle, #333 1px, transparent 1px)",
-                backgroundSize: "24px 24px",
-                minHeight: "450px",
-              }}
-            >
-              {/* Glow effects */}
-              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            {/* Graph Visualization - Dark theme with concentric rings */}
+            {(() => {
+              // Calculate ring positions for molts
+              const moltSize = 56; // Size of each molt node
+              const ringSpacing = 80; // Space between rings
+              const centerOffset = 120; // Distance from center to first ring (enough to not overlap human node)
 
-              <div
-                className="relative w-full max-w-3xl mx-auto flex flex-col items-center"
-                style={{ minHeight: "320px" }}
-              >
-                {/* Center node - Human */}
-                <div className="z-10">
-                  <div className="flex flex-col items-center">
-                    {/* Node with dashed border */}
+              // Distribute molts into rings (more molts in outer rings)
+              const getRingCapacity = (ringIndex: number) => Math.max(6, Math.floor(6 + ringIndex * 6));
+
+              const rings: number[][] = [];
+              let remainingMolts = data.molts.length;
+              let ringIndex = 0;
+
+              while (remainingMolts > 0) {
+                const capacity = getRingCapacity(ringIndex);
+                const moltsInRing = Math.min(capacity, remainingMolts);
+                rings.push(Array.from({ length: moltsInRing }, (_, i) => rings.flat().length + i));
+                remainingMolts -= moltsInRing;
+                ringIndex++;
+              }
+
+              // Calculate required size - add extra padding for scrolling
+              const numRings = rings.length;
+              const maxRadius = centerOffset + (numRings - 1) * ringSpacing + moltSize;
+              const canvasSize = maxRadius * 2 + 200; // Extra padding for scrolling
+
+              return (
+                <div
+                  ref={graphContainerRef}
+                  className="relative rounded-2xl mb-8 overflow-hidden select-none"
+                  style={{
+                    backgroundColor: "#0d0d0d",
+                    backgroundImage:
+                      "radial-gradient(circle, #333 1px, transparent 1px)",
+                    backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+                    backgroundPosition: `${panOffset.x}px ${panOffset.y}px`,
+                    height: "500px",
+                    cursor: isPanning ? "grabbing" : "grab",
+                  }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseLeave}
+                  onWheel={handleWheel}
+                >
+                  {/* Zoom controls */}
+                  <div className="absolute top-4 right-4 z-20 flex flex-col gap-2" onMouseDown={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setZoom((z) => Math.min(z * 1.2, 3))}
+                      className="w-8 h-8 bg-gray-800 hover:bg-gray-700 text-white rounded-lg flex items-center justify-center text-lg font-bold cursor-pointer"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => setZoom((z) => Math.max(z * 0.8, 0.3))}
+                      className="w-8 h-8 bg-gray-800 hover:bg-gray-700 text-white rounded-lg flex items-center justify-center text-lg font-bold cursor-pointer"
+                    >
+                      −
+                    </button>
+                    <button
+                      onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }}
+                      className="w-8 h-8 bg-gray-800 hover:bg-gray-700 text-white rounded-lg flex items-center justify-center text-xs font-medium cursor-pointer"
+                      title="Reset view"
+                    >
+                      ⟲
+                    </button>
+                  </div>
+
+                  {/* Pannable/zoomable content */}
+                  <div
+                    className="absolute"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                      transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoom})`,
+                      transformOrigin: "center center",
+                      width: `${canvasSize}px`,
+                      height: `${canvasSize}px`,
+                    }}
+                  >
+                    {/* Glow effects */}
                     <div
-                      className="relative w-28 h-28 rounded-2xl flex items-center justify-center"
+                      className="absolute w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none"
                       style={{
-                        background:
-                          "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
-                        boxShadow: "0 0 40px rgba(239, 68, 68, 0.15)",
+                        left: `${canvasSize / 2 - 128}px`,
+                        top: `${canvasSize / 2 - 128}px`,
+                      }}
+                    ></div>
+
+                    {/* Ring guides (decorative circles) */}
+                    <svg
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: 0,
+                        top: 0,
+                        width: canvasSize,
+                        height: canvasSize,
                       }}
                     >
-                      {/* Dashed border overlay */}
-                      <div
-                        className="absolute inset-0 rounded-2xl pointer-events-none"
-                        style={{
-                          border: "2px dashed #ef4444",
-                          opacity: 0.7,
-                        }}
-                      ></div>
-                      {/* Inner content */}
-                      <div className="text-center">
-                        <svg
-                          className="w-10 h-10 mx-auto text-white"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
+                      {rings.map((_, i) => (
+                        <circle
+                          key={i}
+                          cx={canvasSize / 2}
+                          cy={canvasSize / 2}
+                          r={centerOffset + i * ringSpacing}
+                          fill="none"
+                          stroke="#22c55e"
+                          strokeWidth="1"
+                          strokeDasharray="4 8"
+                          strokeOpacity="0.2"
+                        />
+                      ))}
+                    </svg>
+
+                    {/* Center node - Human */}
+                    <div
+                      className="absolute z-10"
+                      style={{
+                        left: `${canvasSize / 2}px`,
+                        top: `${canvasSize / 2}px`,
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
+                      <div className="flex flex-col items-center">
+                        <div
+                          className="relative w-24 h-24 rounded-2xl flex items-center justify-center"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
+                            boxShadow: "0 0 40px rgba(239, 68, 68, 0.15)",
+                          }}
                         >
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                        </svg>
-                      </div>
-                    </div>
-                    {/* Label */}
-                    <div className="mt-3 text-center">
-                      {twitterClaim?.claimed && twitterClaim.twitterHandle ? (
-                        <a
-                          href={`https://twitter.com/${twitterClaim.twitterHandle}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-medium"
-                        >
+                          <div
+                            className="absolute inset-0 rounded-2xl pointer-events-none"
+                            style={{
+                              border: "2px dashed #ef4444",
+                              opacity: 0.7,
+                            }}
+                          ></div>
                           <svg
-                            className="w-4 h-4"
+                            className="w-10 h-10 text-white"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                           </svg>
-                          @{twitterClaim.twitterHandle}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400 text-sm">{isMySwarm ? "You" : "Human"}</span>
-                      )}
+                        </div>
+                        <div className="mt-2 text-center">
+                          {twitterClaim?.claimed && twitterClaim.twitterHandle ? (
+                            <a
+                              href={`https://twitter.com/${twitterClaim.twitterHandle}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-medium text-sm"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                              </svg>
+                              @{twitterClaim.twitterHandle}
+                            </a>
+                          ) : (
+                            <span className="text-gray-400 text-sm">{isMySwarm ? "You" : "Human"}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Molt nodes in rings */}
+                    {rings.map((ring, ringIdx) => {
+                      const radius = centerOffset + ringIdx * ringSpacing;
+                      return ring.map((moltIndex, posInRing) => {
+                        const angle = (posInRing / ring.length) * 2 * Math.PI - Math.PI / 2;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        const molt = data.molts[moltIndex];
+
+                        return (
+                          <div
+                            key={molt.publicKey}
+                            className="absolute flex flex-col items-center"
+                            style={{
+                              left: `${canvasSize / 2 + x}px`,
+                              top: `${canvasSize / 2 + y}px`,
+                              transform: "translate(-50%, -50%)",
+                            }}
+                          >
+                            <div
+                              className="relative w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
+                                boxShadow: "0 0 20px rgba(34, 197, 94, 0.2)",
+                              }}
+                              title={molt.publicKey}
+                            >
+                              <div
+                                className="absolute inset-0 rounded-full pointer-events-none"
+                                style={{
+                                  border: "2px dashed #22c55e",
+                                  opacity: 0.7,
+                                }}
+                              ></div>
+                              <Image
+                                src="/logo.png"
+                                alt="Molt"
+                                width={28}
+                                height={28}
+                                className="rounded-full"
+                              />
+                            </div>
+                          </div>
+                        );
+                      });
+                    })}
                   </div>
                 </div>
-
-                {/* Connection lines */}
-                <div className="flex justify-center py-4">
-                  <svg
-                    width={Math.max(200, data.molts.length * 100)}
-                    height="60"
-                    className="overflow-visible"
-                  >
-                    {data.molts.map((_, index) => {
-                      const totalMolts = data.molts.length;
-                      const spacing = totalMolts === 1 ? 0 : 80;
-                      const totalWidth = (totalMolts - 1) * spacing;
-                      const startX = totalMolts === 1 ? 100 : (Math.max(200, totalMolts * 100) - totalWidth) / 2;
-                      const x = startX + index * spacing;
-                      const centerX = Math.max(200, totalMolts * 100) / 2;
-                      return (
-                        <path
-                          key={index}
-                          d={`M ${centerX} 0 Q ${centerX} 30 ${x} 60`}
-                          stroke="#ef4444"
-                          strokeWidth="2"
-                          strokeDasharray="2 6"
-                          strokeLinecap="round"
-                          strokeOpacity="0.6"
-                          fill="none"
-                        />
-                      );
-                    })}
-                  </svg>
-                </div>
-
-                {/* Molt nodes */}
-                <div className="flex justify-center gap-6 flex-wrap">
-                  {data.molts.map((molt) => (
-                    <div key={molt.publicKey} className="flex flex-col items-center">
-                      <div
-                        className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)",
-                          boxShadow: "0 0 30px rgba(34, 197, 94, 0.15)",
-                        }}
-                        title={molt.publicKey}
-                      >
-                        <div
-                          className="absolute inset-0 rounded-full pointer-events-none"
-                          style={{
-                            border: "2px dashed #22c55e",
-                            opacity: 0.7,
-                          }}
-                        ></div>
-                        <Image
-                          src="/logo.png"
-                          alt="Molt"
-                          width={40}
-                          height={40}
-                          className="rounded-full"
-                        />
-                      </div>
-                      <span className="text-gray-400 text-sm mt-3">Molt</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Twitter Connect CTA - only show for own swarm */}
             {isMySwarm && !twitterClaim?.claimed && (

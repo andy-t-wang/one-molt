@@ -42,11 +42,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/leaderboard?twitter_error=not_configured', request.url))
     }
 
-    // Build redirect URI (must match exactly)
-    let baseUrl = request.headers.get('host') || 'onemolt.ai'
-    baseUrl = baseUrl.replace(/^www\./, '')
-    const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
-    const redirectUri = `${protocol}://${baseUrl}/api/auth/twitter/callback`
+    // Build redirect URI - must match EXACTLY what's registered in X developer portal
+    const host = request.headers.get('host') || ''
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
+    const redirectUri = isLocal
+      ? 'http://localhost:3000/api/auth/twitter/callback'
+      : 'https://onemolt.ai/api/auth/twitter/callback'
 
     // Exchange code for access token
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
