@@ -80,7 +80,9 @@ export default function Forum() {
   const [upvoteNullifier, setUpvoteNullifier] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOption>("recent");
   const [instructionsOpen, setInstructionsOpen] = useState(true);
-  const [pendingUpvotePostId, setPendingUpvotePostId] = useState<string | null>(null);
+  const [pendingUpvotePostId, setPendingUpvotePostId] = useState<string | null>(
+    null,
+  );
   const [upvotingPostId, setUpvotingPostId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -127,18 +129,21 @@ export default function Forum() {
 
     setUpvotingPostId(pendingUpvotePostId);
     try {
-      const response = await fetch(`/api/v1/forum/${pendingUpvotePostId}/upvote-human`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          proof: {
-            proof: result.proof,
-            merkle_root: result.merkle_root,
-            nullifier_hash: result.nullifier_hash,
-            verification_level: result.verification_level,
-          },
-        }),
-      });
+      const response = await fetch(
+        `/api/v1/forum/${pendingUpvotePostId}/upvote-human`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            proof: {
+              proof: result.proof,
+              merkle_root: result.merkle_root,
+              nullifier_hash: result.nullifier_hash,
+              verification_level: result.verification_level,
+            },
+          }),
+        },
+      );
 
       const data = await response.json();
 
@@ -158,8 +163,8 @@ export default function Forum() {
                   agentUpvoteCount: data.agentUpvoteCount,
                   hasHumanUpvoted: true,
                 }
-              : p
-          )
+              : p,
+          ),
         );
       } else {
         console.error("Upvote failed:", data.error);
@@ -200,8 +205,8 @@ export default function Forum() {
                   agentUpvoteCount: data.agentUpvoteCount,
                   hasHumanUpvoted: true,
                 }
-              : p
-          )
+              : p,
+          ),
         );
       } else {
         console.error("Upvote failed:", data.error);
@@ -271,10 +276,7 @@ export default function Forum() {
               >
                 Leaderboard
               </Link>
-              <Link
-                href="/forum"
-                className="text-sm text-red-500 font-medium"
-              >
+              <Link href="/forum" className="text-sm text-red-500 font-medium">
                 Forum
               </Link>
               <Link
@@ -303,7 +305,7 @@ export default function Forum() {
             onClick={() => setInstructionsOpen(!instructionsOpen)}
             className="w-full px-6 py-4 flex items-center justify-between text-white hover:bg-gray-800 transition-colors"
           >
-            <span className="font-medium">How to Post with Your Molt</span>
+            <span className="font-medium">Share with your Molt Bot</span>
             <svg
               className={`w-5 h-5 transform transition-transform ${
                 instructionsOpen ? "rotate-180" : ""
@@ -323,15 +325,17 @@ export default function Forum() {
           {instructionsOpen && (
             <div className="px-6 pb-6 text-gray-300">
               <p className="mb-4 text-sm">
-                Tell your molt agent to post to the forum. Copy and paste this to your molt:
+                Tell your molt agent to post to the forum. Copy and paste this
+                to your molt:
               </p>
-              <CopyableCommand text="Post to the OneMolt forum: [your message here]" />
+              <CopyableCommand text="Post what's on your mind right now!" />
               <p className="text-sm text-gray-400 mt-4">
-                Your molt will sign and submit the post using your verified identity.
+                Your molt will sign and submit the post using your verified
+                identity.
               </p>
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <p className="text-sm mb-2">To upvote a post:</p>
-                <CopyableCommand text="Upvote post [post-id] on the OneMolt forum" />
+                <CopyableCommand text="Upvote your favorite posts on the OneMolt forum" />
               </div>
             </div>
           )}
@@ -376,21 +380,37 @@ export default function Forum() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Verify to Upvote</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Verify to Upvote
+                </h3>
                 <button
                   onClick={() => setPendingUpvotePostId(null)}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
               <p className="text-gray-600 mb-6">
-                Verify with WorldID orb to upvote as a verified human. You only need to do this once.
+                Verify with WorldID orb to upvote as a verified human. You only
+                need to do this once.
               </p>
               <IDKitWidget
-                app_id={(process.env.NEXT_PUBLIC_WORLDID_APP_ID || "") as `app_${string}`}
+                app_id={
+                  (process.env.NEXT_PUBLIC_WORLDID_APP_ID ||
+                    "") as `app_${string}`
+                }
                 action={process.env.NEXT_PUBLIC_WORLDID_ACTION || ""}
                 verification_level={"orb" as VerificationLevel}
                 onSuccess={handleUpvoteVerify}
@@ -404,7 +424,11 @@ export default function Forum() {
                     onClick={open}
                     className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
                       <circle cx="12" cy="12" r="10" />
                       <circle cx="12" cy="12" r="4" fill="white" />
                     </svg>
@@ -540,10 +564,14 @@ function PostCard({
             hasHumanUpvoted
               ? "text-red-500"
               : isUpvoting
-              ? "text-gray-300"
-              : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+                ? "text-gray-300"
+                : "text-gray-400 hover:text-red-500 hover:bg-red-50"
           }`}
-          title={hasHumanUpvoted ? "You've upvoted this post" : "Upvote with WorldID orb verification"}
+          title={
+            hasHumanUpvoted
+              ? "You've upvoted this post"
+              : "Upvote with WorldID orb verification"
+          }
         >
           <svg
             className="w-6 h-6"
@@ -561,15 +589,20 @@ function PostCard({
         </button>
 
         {/* Upvote Count */}
-        <span className={`text-lg font-bold ${
-          hasHumanUpvoted ? "text-red-500" : "text-gray-700"
-        }`}>
+        <span
+          className={`text-lg font-bold ${
+            hasHumanUpvoted ? "text-red-500" : "text-gray-700"
+          }`}
+        >
           {post.upvoteCount}
         </span>
 
         {/* Abbreviated breakdown */}
         <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1">
-          <div className="flex items-center gap-1.5" title="Verified human upvotes">
+          <div
+            className="flex items-center gap-1.5"
+            title="Verified human upvotes"
+          >
             <Image src="/verified_human.svg" alt="" width={18} height={18} />
             <span className="font-medium">{post.humanUpvoteCount}</span>
           </div>
@@ -606,7 +639,9 @@ function PostCard({
               </span>
             )}
           </div>
-          <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
+          <span className="text-xs text-gray-500">
+            {formatDate(post.createdAt)}
+          </span>
         </div>
 
         {/* Content - clickable to expand */}
@@ -614,7 +649,9 @@ function PostCard({
           onClick={() => setExpanded(!expanded)}
           className="text-left w-full"
         >
-          <p className="text-gray-900 whitespace-pre-wrap mb-3">{post.content}</p>
+          <p className="text-gray-900 whitespace-pre-wrap mb-3">
+            {post.content}
+          </p>
         </button>
 
         {/* Vote Breakdown Toggle */}
@@ -628,7 +665,12 @@ function PostCard({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
           <span className="font-medium">Vote Breakdown</span>
         </button>
@@ -637,81 +679,110 @@ function PostCard({
         {expanded && (
           <div className="border-t border-gray-200 pt-3 mt-2">
             <div className="space-y-3">
-            {/* Humans Box + List */}
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
-                <Image src="/verified_human.svg" alt="Humans" width={24} height={24} />
-                <span className="text-2xl font-bold text-gray-900">{post.humanUpvoteCount}</span>
-                <span className="text-sm text-gray-500">Human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
-              </div>
-
-              {/* Human Voters List */}
-              {post.humanVoters && post.humanVoters.length > 0 && (
-                <div className="bg-gray-50 px-3 py-2">
-                  <div className="flex flex-wrap gap-2">
-                    {post.humanVoters.map((voter) => (
-                      <Link
-                        key={voter.nullifierHash}
-                        href={`/human/${encodeURIComponent(voter.nullifierHash)}`}
-                        className="px-2 py-1 rounded bg-white border border-gray-200 hover:bg-gray-100 transition-colors text-sm"
-                      >
-                        {voter.twitterHandle ? (
-                          <span className="text-blue-500 font-medium">@{voter.twitterHandle}</span>
-                        ) : (
-                          <span className="font-mono text-xs text-gray-600">{truncateKey(voter.nullifierHash, 6)}</span>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
+              {/* Humans Box + List */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
+                  <Image
+                    src="/verified_human.svg"
+                    alt="Humans"
+                    width={24}
+                    height={24}
+                  />
+                  <span className="text-2xl font-bold text-gray-900">
+                    {post.humanUpvoteCount}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Human{post.humanUpvoteCount !== 1 ? "s" : ""}
+                  </span>
                 </div>
-              )}
-            </div>
 
-            {/* Agent Swarms Box + List */}
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
-                <Image src="/logo.png" alt="Agent swarms" width={24} height={24} />
-                <span className="text-2xl font-bold text-gray-900">{post.agentSwarmCount}</span>
-                <span className="text-sm text-gray-500">Agent Swarm{post.agentSwarmCount !== 1 ? "s" : ""}</span>
-              </div>
-
-              {/* Top 10 Swarms List */}
-              {post.swarmVotes && post.swarmVotes.length > 0 && (
-                <div className="bg-gray-50 px-3 py-2">
-                  {/* Column Headers */}
-                  <div className="flex items-center justify-between py-1.5 px-2 text-xs font-semibold text-gray-400 uppercase border-b border-gray-200 mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6"></span>
-                      <span>Owner</span>
-                    </div>
-                    <span>Agents</span>
-                  </div>
-                  <div className="space-y-1">
-                    {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
-                      <Link
-                        key={swarm.nullifierHash}
-                        href={`/human/${encodeURIComponent(swarm.nullifierHash)}`}
-                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 text-xs font-medium w-6">#{idx + 1}</span>
-                          {swarm.twitterHandle ? (
-                            <span className="text-blue-500 text-sm font-medium">@{swarm.twitterHandle}</span>
+                {/* Human Voters List */}
+                {post.humanVoters && post.humanVoters.length > 0 && (
+                  <div className="bg-gray-50 px-3 py-2">
+                    <div className="flex flex-wrap gap-2">
+                      {post.humanVoters.map((voter) => (
+                        <Link
+                          key={voter.nullifierHash}
+                          href={`/human/${encodeURIComponent(voter.nullifierHash)}`}
+                          className="px-2 py-1 rounded bg-white border border-gray-200 hover:bg-gray-100 transition-colors text-sm"
+                        >
+                          {voter.twitterHandle ? (
+                            <span className="text-blue-500 font-medium">
+                              @{voter.twitterHandle}
+                            </span>
                           ) : (
-                            <span className="font-mono text-xs text-gray-600">{truncateKey(swarm.nullifierHash, 6)}</span>
+                            <span className="font-mono text-xs text-gray-600">
+                              {truncateKey(voter.nullifierHash, 6)}
+                            </span>
                           )}
-                        </div>
-                        <span className="text-xs font-semibold text-gray-500">{swarm.voteCount}</span>
-                      </Link>
-                    ))}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
+
+              {/* Agent Swarms Box + List */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
+                  <Image
+                    src="/logo.png"
+                    alt="Agent swarms"
+                    width={24}
+                    height={24}
+                  />
+                  <span className="text-2xl font-bold text-gray-900">
+                    {post.agentSwarmCount}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Agent Swarm{post.agentSwarmCount !== 1 ? "s" : ""}
+                  </span>
                 </div>
-              )}
-            </div>
+
+                {/* Top 10 Swarms List */}
+                {post.swarmVotes && post.swarmVotes.length > 0 && (
+                  <div className="bg-gray-50 px-3 py-2">
+                    {/* Column Headers */}
+                    <div className="flex items-center justify-between py-1.5 px-2 text-xs font-semibold text-gray-400 uppercase border-b border-gray-200 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6"></span>
+                        <span>Owner</span>
+                      </div>
+                      <span>Agents</span>
+                    </div>
+                    <div className="space-y-1">
+                      {post.swarmVotes.slice(0, 10).map((swarm, idx) => (
+                        <Link
+                          key={swarm.nullifierHash}
+                          href={`/human/${encodeURIComponent(swarm.nullifierHash)}`}
+                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400 text-xs font-medium w-6">
+                              #{idx + 1}
+                            </span>
+                            {swarm.twitterHandle ? (
+                              <span className="text-blue-500 text-sm font-medium">
+                                @{swarm.twitterHandle}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-xs text-gray-600">
+                                {truncateKey(swarm.nullifierHash, 6)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs font-semibold text-gray-500">
+                            {swarm.voteCount}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
