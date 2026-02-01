@@ -9,8 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@andy_tfh/idkit": "2.4.4-dev.0",
     "@supabase/supabase-js": "^2.93.3",
-    "@worldcoin/idkit": "^2.4.2",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -39,17 +39,25 @@
     "url": "https://github.com/andy-t-wang/one-molt"
   },
   "openclaw": {
-    "extensions": ["./plugin.ts"]
+    "extensions": [
+      "./plugin.ts"
+    ]
   },
   "moltbot": {
-    "extensions": ["./plugin.ts"]
+    "extensions": [
+      "./plugin.ts"
+    ]
   },
   "peerDependencies": {
-    "openclaw": "*",
-    "moltbot": "*"
+    "moltbot": "*",
+    "openclaw": "*"
   },
   "peerDependenciesMeta": {
-    "openclaw": { "optional": true },
-    "moltbot": { "optional": true }
+    "openclaw": {
+      "optional": true
+    },
+    "moltbot": {
+      "optional": true
+    }
   }
 }

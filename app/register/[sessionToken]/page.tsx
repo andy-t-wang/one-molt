@@ -9,7 +9,7 @@ import {
   IDKitWidget,
   ISuccessResult,
   VerificationLevel,
-} from "@worldcoin/idkit";
+} from "@andy_tfh/idkit";
 import type {
   RegistrationStatusResponse,
   WorldIDSubmitResponse,

@@ -1,8 +1,8 @@
 // WorldID proof verification
 // Verifies WorldID proofs against the WorldID Developer Portal API
 
-import { verifyCloudProof } from '@worldcoin/idkit'
-import type { ISuccessResult } from '@worldcoin/idkit'
+import { verifyCloudProof } from '@andy_tfh/idkit'
+import type { ISuccessResult } from '@andy_tfh/idkit'
 import type { WorldIDProof } from './types'
 
 /**

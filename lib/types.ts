@@ -1,6 +1,12 @@
 // TypeScript type definitions for the WorldID Identity Proof System
 
 // ============================================================================
+// Common Types
+// ============================================================================
+
+export type VerificationLevelType = 'face' | 'device' | 'orb'
+
+// ============================================================================
 // Registration Types
 // ============================================================================
 
@@ -22,7 +28,7 @@ export interface WorldIDProof {
   proof: string
   merkle_root: string
   nullifier_hash: string
-  verification_level: string
+  verification_level: VerificationLevelType
 }
 
 export interface WorldIDSubmitRequest {
@@ -163,4 +169,4 @@ export interface ApiError {
 // ============================================================================
 // WorldID API Types
 // ============================================================================
-// Note: We use ISuccessResult from @worldcoin/idkit for WorldID proof types
+// Note: We use ISuccessResult from @andy_tfh/idkit for WorldID proof types
