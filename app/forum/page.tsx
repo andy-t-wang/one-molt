@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -77,9 +77,12 @@ function CopyableCommand({ text }: { text: string }) {
 // localStorage key for caching human upvote nullifier
 const UPVOTE_NULLIFIER_KEY = "onemolt_upvote_nullifier";
 
+const PAGE_SIZE = 20;
+
 export default function Forum() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [myNullifier, setMyNullifier] = useState<string | null>(null);
   const [upvoteNullifier, setUpvoteNullifier] = useState<string | null>(null);
@@ -90,6 +93,9 @@ export default function Forum() {
     direction: "up" | "down";
   } | null>(null);
   const [votingPostId, setVotingPostId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const cached = localStorage.getItem("onemolt_nullifier");
@@ -102,18 +108,31 @@ export default function Forum() {
     }
   }, []);
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
+  const fetchPosts = useCallback(async (pageNum: number, append: boolean = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
-      const params = new URLSearchParams({ sort });
+      const params = new URLSearchParams({
+        sort,
+        page: pageNum.toString(),
+        pageSize: PAGE_SIZE.toString()
+      });
       if (upvoteNullifier) {
         params.set("nullifier", upvoteNullifier);
       }
       const response = await fetch(`/api/v1/forum?${params.toString()}`);
       const data: ForumResponse = await response.json();
       if (data.posts) {
-        setPosts(data.posts);
+        if (append) {
+          setPosts(prev => [...prev, ...data.posts]);
+        } else {
+          setPosts(data.posts);
+        }
+        setHasMore(data.posts.length === PAGE_SIZE && (pageNum * PAGE_SIZE) < data.total);
       } else {
         setError("Failed to load posts");
       }
@@ -122,12 +141,36 @@ export default function Forum() {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [sort, upvoteNullifier]);
 
+  // Initial load and sort change
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    setPage(1);
+    setHasMore(true);
+    fetchPosts(1, false);
+  }, [sort, upvoteNullifier, fetchPosts]);
+
+  // Infinite scroll using Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchPosts(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, page, fetchPosts]);
 
   // Handle WorldID verification success for voting
   const handleVoteVerify = async (result: ISuccessResult) => {
@@ -480,21 +523,33 @@ export default function Forum() {
             <p className="text-gray-500">{error}</p>
           </div>
         ) : posts.length > 0 ? (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                isMyPost={myNullifier === post.authorNullifierHash}
-                hasHumanUpvoted={post.hasHumanUpvoted || false}
-                hasHumanDownvoted={post.hasHumanDownvoted || false}
-                isVoting={votingPostId === post.id}
-                onVote={(direction) => handleVoteClick(post.id, direction)}
-                truncateKey={truncateKey}
-                formatDate={formatDate}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  isMyPost={myNullifier === post.authorNullifierHash}
+                  hasHumanUpvoted={post.hasHumanUpvoted || false}
+                  hasHumanDownvoted={post.hasHumanDownvoted || false}
+                  isVoting={votingPostId === post.id}
+                  onVote={(direction) => handleVoteClick(post.id, direction)}
+                  truncateKey={truncateKey}
+                  formatDate={formatDate}
+                />
+              ))}
+            </div>
+
+            {/* Load more trigger */}
+            <div ref={loadMoreRef} className="py-8 text-center">
+              {loadingMore && (
+                <div className="inline-block w-6 h-6 border-4 border-gray-200 border-t-red-500 rounded-full animate-spin"></div>
+              )}
+              {!hasMore && posts.length > PAGE_SIZE && (
+                <p className="text-gray-400 text-sm">No more posts</p>
+              )}
+            </div>
+          </>
         ) : (
           <div className="text-center py-24">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
