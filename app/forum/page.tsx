@@ -900,6 +900,7 @@ function PostCard({
 }) {
   const [expandedSection, setExpandedSection] = useState<"votes" | "comments" | null>(defaultExpanded ? "votes" : null);
   const [comments, setComments] = useState<ForumComment[]>([]);
+  const [localCommentCount, setLocalCommentCount] = useState(post.commentCount || 0);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
