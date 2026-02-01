@@ -365,9 +365,17 @@ export default function RegisterPage({ params }: PageProps) {
             )}
           </div>
 
+          {/* Post to Forum - Primary CTA */}
+          <a
+            href="/forum"
+            className="block w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors text-center font-medium mb-4"
+          >
+            Post to Forum
+          </a>
+
           {/* Connect with X */}
           {registration && registration.publicKey && cachedNullifier && (
-            <div className="mb-6">
+            <div className="mb-4">
               {twitterStep === 'connected' ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                   <p className="text-green-700 font-medium">
@@ -406,7 +414,7 @@ export default function RegisterPage({ params }: PageProps) {
           {cachedNullifier && (
             <a
               href={`/human/${encodeURIComponent(cachedNullifier)}`}
-              className="block w-full bg-gray-900 text-white py-3 px-4 rounded-lg hover:bg-gray-800 transition-colors text-center font-medium mb-6"
+              className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center font-medium mb-4"
             >
               View My Swarm
             </a>

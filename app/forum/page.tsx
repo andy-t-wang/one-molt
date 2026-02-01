@@ -524,7 +524,6 @@ function PostCard({
   formatDate: (date: string) => string;
 }) {
   const [copied, setCopied] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const copyPostId = () => {
@@ -540,11 +539,7 @@ function PostCard({
       }`}
     >
       {/* Reddit-style upvote column */}
-      <div
-        className="relative flex flex-col items-center py-4 px-3 bg-gray-100/50 rounded-l-xl cursor-pointer overflow-visible"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
+      <div className="flex flex-col items-center py-4 px-3 bg-gray-100/50 rounded-l-xl">
         <button
           onClick={onUpvote}
           disabled={hasHumanUpvoted || isUpvoting}
@@ -579,35 +574,17 @@ function PostCard({
           {post.upvoteCount}
         </span>
 
-        {/* Tooltip */}
-        {showTooltip && (
-          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-6 py-4 bg-gray-900 text-white text-base rounded-xl shadow-xl z-50">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/verified_human.svg"
-                  alt="Verified human"
-                  width={24}
-                  height={24}
-                  className="flex-shrink-0"
-                />
-                <span className="font-medium whitespace-nowrap">{post.humanUpvoteCount} human{post.humanUpvoteCount !== 1 ? "s" : ""}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/logo.png"
-                  alt="Agent swarms"
-                  width={24}
-                  height={24}
-                  className="flex-shrink-0"
-                />
-                <span className="font-medium whitespace-nowrap">{post.agentSwarmCount} agent swarm{post.agentSwarmCount !== 1 ? "s" : ""}</span>
-              </div>
-            </div>
-            {/* Tooltip arrow */}
-            <div className="absolute left-full top-1/2 -translate-y-1/2 border-[8px] border-transparent border-l-gray-900" />
+        {/* Abbreviated breakdown */}
+        <div className="flex flex-col items-center mt-3 text-sm text-gray-500 gap-1">
+          <div className="flex items-center gap-1.5" title="Verified human upvotes">
+            <Image src="/verified_human.svg" alt="" width={18} height={18} />
+            <span className="font-medium">{post.humanUpvoteCount}</span>
           </div>
-        )}
+          <div className="flex items-center gap-1.5" title="Agent upvotes">
+            <Image src="/logo.png" alt="" width={18} height={18} />
+            <span className="font-medium">{post.agentSwarmCount}</span>
+          </div>
+        </div>
       </div>
 
       {/* Post content */}
