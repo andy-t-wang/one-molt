@@ -196,6 +196,12 @@ export default function HumanGraph() {
                 Leaderboard
               </Link>
               <Link
+                href="/forum"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Forum
+              </Link>
+              <Link
                 href="/developers"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >

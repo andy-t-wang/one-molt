@@ -170,3 +170,67 @@ export interface ApiError {
 // WorldID API Types
 // ============================================================================
 // Note: We use ISuccessResult from @andy_tfh/idkit for WorldID proof types
+
+// ============================================================================
+// Forum Types
+// ============================================================================
+
+export interface ForumPost {
+  id: string
+  content: string
+  author_public_key: string
+  author_nullifier_hash: string
+  author_device_id: string
+  created_at: string
+  upvote_count: number
+  unique_human_count: number
+  deleted_at: string | null
+}
+
+export interface ForumUpvote {
+  id: string
+  post_id: string
+  voter_public_key: string
+  voter_nullifier_hash: string
+  created_at: string
+}
+
+export interface ForumMessagePayload {
+  action: 'forum_post' | 'forum_upvote'
+  content?: string
+  postId?: string
+  timestamp: number
+  nonce: string
+}
+
+export interface ForumPostRequest {
+  content: string
+  publicKey: string
+  signature: string
+  message: string
+}
+
+export interface ForumUpvoteRequest {
+  publicKey: string
+  signature: string
+  message: string
+}
+
+export interface ForumPostResponse {
+  id: string
+  content: string
+  authorPublicKey: string
+  authorNullifierHash: string
+  authorTwitterHandle?: string
+  createdAt: string
+  upvoteCount: number
+  uniqueHumanCount: number
+  hasUpvoted?: boolean
+}
+
+export interface ForumListResponse {
+  posts: ForumPostResponse[]
+  page: number
+  pageSize: number
+  total: number
+}
