@@ -20,6 +20,12 @@ interface HumanMoltsResponse {
   queryType: "nullifier_hash";
 }
 
+interface TwitterClaim {
+  claimed: boolean;
+  twitterHandle?: string;
+  claimedAt?: string;
+}
+
 export default function HumanGraph() {
   const params = useParams();
   const nullifierHash = decodeURIComponent(params.nullifierHash as string);
@@ -27,6 +33,15 @@ export default function HumanGraph() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [myNullifier, setMyNullifier] = useState<string | null>(null);
+
+  // Twitter verification state
+  const [twitterClaim, setTwitterClaim] = useState<TwitterClaim | null>(null);
+  const [twitterStep, setTwitterStep] = useState<"idle" | "tweeting" | "pasting">("idle");
+  const [tweetUrl, setTweetUrl] = useState("");
+  const [twitterError, setTwitterError] = useState<string | null>(null);
+  const [twitterLoading, setTwitterLoading] = useState(false);
+
+  const isMySwarm = myNullifier === nullifierHash;
 
   useEffect(() => {
     // Check for cached nullifier
@@ -55,8 +70,82 @@ export default function HumanGraph() {
       }
     };
 
+    const fetchTwitterClaim = async () => {
+      try {
+        const response = await fetch(
+          `/api/v1/claim-twitter?nullifier=${encodeURIComponent(nullifierHash)}`
+        );
+        const result = await response.json();
+        setTwitterClaim(result);
+      } catch (err) {
+        console.error("Failed to fetch Twitter claim:", err);
+      }
+    };
+
     fetchData();
+    fetchTwitterClaim();
   }, [nullifierHash]);
+
+  const handleVerifyTwitter = async () => {
+    setTwitterError(null);
+    setTwitterLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/v1/claim-twitter?nullifier=${encodeURIComponent(nullifierHash)}&code=true`
+      );
+      const result = await response.json();
+
+      if (result.tweetIntentUrl) {
+        window.open(result.tweetIntentUrl, "_blank");
+        setTwitterStep("pasting");
+      } else {
+        setTwitterError(result.error || "Failed to generate verification");
+      }
+    } catch (err) {
+      setTwitterError("Failed to start verification");
+      console.error(err);
+    } finally {
+      setTwitterLoading(false);
+    }
+  };
+
+  const handleSubmitTweet = async () => {
+    if (!tweetUrl.trim()) return;
+
+    setTwitterError(null);
+    setTwitterLoading(true);
+
+    try {
+      const response = await fetch("/api/v1/claim-twitter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nullifierHash,
+          tweetUrl: tweetUrl.trim(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setTwitterClaim({
+          claimed: true,
+          twitterHandle: result.twitterHandle,
+          claimedAt: new Date().toISOString(),
+        });
+        setTwitterStep("idle");
+        setTweetUrl("");
+      } else {
+        setTwitterError(result.error || "Failed to verify tweet");
+      }
+    } catch (err) {
+      setTwitterError("Failed to submit verification");
+      console.error(err);
+    } finally {
+      setTwitterLoading(false);
+    }
+  };
 
   const truncateKey = (key: string, length: number = 8) => {
     if (key.length <= length * 2) return key;
@@ -101,6 +190,12 @@ export default function HumanGraph() {
                   My Swarm
                 </Link>
               )}
+              <Link
+                href="/leaderboard"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Leaderboard
+              </Link>
               <Link
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
@@ -151,10 +246,85 @@ export default function HumanGraph() {
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">Human Identity Graph</h1>
-              <p className="text-gray-500 font-mono text-sm">
-                {truncateKey(data.nullifierHash, 12)}
-              </p>
+              {twitterClaim?.claimed && twitterClaim.twitterHandle ? (
+                <a
+                  href={`https://twitter.com/${twitterClaim.twitterHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-600 font-medium"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  @{twitterClaim.twitterHandle}
+                </a>
+              ) : (
+                <p className="text-gray-500 font-mono text-sm">
+                  {truncateKey(data.nullifierHash, 12)}
+                </p>
+              )}
             </div>
+
+            {/* Twitter Verification - only show for own swarm */}
+            {isMySwarm && !twitterClaim?.claimed && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
+                {twitterStep === "idle" && (
+                  <div className="text-center">
+                    <p className="text-gray-600 mb-4">
+                      Link your Twitter to show on the leaderboard
+                    </p>
+                    <button
+                      onClick={handleVerifyTwitter}
+                      disabled={twitterLoading}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                      {twitterLoading ? "Loading..." : "Verify Twitter"}
+                    </button>
+                  </div>
+                )}
+
+                {twitterStep === "pasting" && (
+                  <div>
+                    <p className="text-gray-600 mb-4 text-center">
+                      After tweeting, paste the tweet URL below:
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={tweetUrl}
+                        onChange={(e) => setTweetUrl(e.target.value)}
+                        placeholder="https://twitter.com/you/status/123..."
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <button
+                        onClick={handleSubmitTweet}
+                        disabled={twitterLoading || !tweetUrl.trim()}
+                        className="px-6 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:bg-gray-300 transition-colors"
+                      >
+                        {twitterLoading ? "..." : "Verify"}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setTwitterStep("idle");
+                        setTweetUrl("");
+                        setTwitterError(null);
+                      }}
+                      className="mt-3 text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {twitterError && (
+                  <p className="mt-3 text-sm text-red-500 text-center">{twitterError}</p>
+                )}
+              </div>
+            )}
 
             {/* Graph Visualization */}
             <div className="relative bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-8 overflow-hidden">

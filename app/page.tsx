@@ -97,6 +97,12 @@ export default function Home() {
                 </a>
               )}
               <a
+                href="/leaderboard"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Leaderboard
+              </a>
+              <a
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >
