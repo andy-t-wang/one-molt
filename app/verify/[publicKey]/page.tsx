@@ -112,7 +112,7 @@ export default function VerifyPage({ params }: PageProps) {
                 `/api/v1/molt/${encodeURIComponent(data.worldId.nullifierHash)}`,
               );
               const swarm = await swarmResponse.json();
-              if (swarm.queryType === "nullifier_hash") {
+              if (swarm.queryType === "human_id") {
                 setSwarmData(swarm);
               }
             }
