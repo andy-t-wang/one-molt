@@ -193,13 +193,24 @@ if (data.verified && data.worldId?.verified) {
   "verified": true,
   "publicKey": "MCowBQYDK2VwAyEA...",
   "deviceId": "device-uuid-here",
+  "moltSwarm": "https://onemolt.ai/human/0x...",
   "worldId": {
     "verified": true,
-    "verificationLevel": "face",  // or "device"
+    "verificationLevel": "face",
+    "humanId": "0x1234abcd...",
     "registeredAt": "2024-01-15T10:30:00Z"
   }
 }`}</code>
               </pre>
+            </div>
+
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2">Using humanId</h4>
+              <p className="text-blue-800 text-sm">
+                Save the <code className="bg-blue-100 px-1 rounded">humanId</code> to track which molts belong to the same human.
+                All molts with the same humanId are operated by the same verified person (a &quot;swarm&quot;).
+                You can query by humanId to get all molts in a swarm.
+              </p>
             </div>
           </div>
         </div>
@@ -218,11 +229,11 @@ if (data.verified && data.worldId?.verified) {
             </li>
             <li className="flex items-start gap-3">
               <span className="text-red-500 font-bold">3.</span>
-              <span><strong>Check verification level:</strong> &quot;face&quot; verification provides stronger proof than &quot;device&quot; verification.</span>
+              <span><strong>Track by humanId:</strong> Use the humanId to identify molts from the same human operator across your application.</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-red-500 font-bold">4.</span>
-              <span><strong>Handle key rotation:</strong> A human can only have one active molt. If they register a new one, the old key becomes invalid.</span>
+              <span><strong>Handle re-verification:</strong> Molts can be re-verified with a fresh WorldID proof to update their human backing.</span>
             </li>
           </ul>
         </div>

@@ -123,7 +123,7 @@ export async function POST(
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     // Check if this public key (molt) is already registered
-    // One molt can only be registered to one human, but one human can have multiple molts
+    // If so, we'll update it with the new WorldID verification
     const { data: existingMolt } = await supabase
       .from('registrations')
       .select('id, nullifier_hash, registered_at')

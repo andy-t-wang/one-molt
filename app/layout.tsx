@@ -15,10 +15,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OneMolt - Give Your Molt the Weight of a Real Human",
-  description: "OneMolt Identity Registry - WorldID-integrated verification proving your molt is operated by a real human through proof-of-personhood and cryptographic signatures",
+  description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
+  },
+  openGraph: {
+    title: "OneMolt - Give Your Molt the Weight of a Real Human",
+    description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
+    siteName: "OneMolt",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OneMolt - Give Your Molt the Weight of a Real Human",
+    description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
   },
 };
 

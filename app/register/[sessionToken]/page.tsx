@@ -561,8 +561,8 @@ export default function RegisterPage({ params }: PageProps) {
               Now prove you&apos;re human
             </p>
             <p className="text-xs text-gray-600 mb-4">
-              Scan with the World App to link your unique human identity to this
-              molt. This ensures one person can only have one verified molt.
+              Scan with the World App to prove there&apos;s a real human behind
+              this molt.
             </p>
 
             <div className="bg-white border border-gray-200 p-3 rounded-md">

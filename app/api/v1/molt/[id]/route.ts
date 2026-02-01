@@ -1,6 +1,6 @@
 // GET /api/v1/molt/[id]
-// Unified endpoint to check molt verification status by device ID, public key, or nullifier hash
-// When querying by nullifier_hash, returns all molts registered to that human
+// Unified endpoint to check molt verification status by device ID, public key, or human ID
+// When querying by humanId, returns all molts registered to that human
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
@@ -22,7 +22,7 @@ interface MoltStatusResponse {
   worldId: {
     verified: boolean
     verificationLevel?: string
-    nullifierHash?: string
+    humanId?: string
     registeredAt?: string
     lastVerifiedAt?: string
   }
@@ -31,10 +31,10 @@ interface MoltStatusResponse {
 
 interface HumanMoltsResponse {
   verified: boolean
-  nullifierHash: string
+  humanId: string
   moltSwarm: string
   molts: MoltInfo[]
-  queryType: 'nullifier_hash'
+  queryType: 'human_id'
 }
 
 export async function GET(
@@ -72,9 +72,9 @@ export async function GET(
       queryType = 'public_key'
     }
 
-    // If not found by public_key, try nullifier_hash (returns all molts for this human)
+    // If not found by public_key, try humanId (returns all molts for this human)
     if (error || !registration) {
-      const { data: molts, error: nullifierError } = await supabase
+      const { data: molts, error: humanIdError } = await supabase
         .from('registrations')
         .select('*')
         .eq('nullifier_hash', decodedId)
@@ -82,12 +82,12 @@ export async function GET(
         .eq('active', true)
         .order('registered_at', { ascending: false })
 
-      if (!nullifierError && molts && molts.length > 0) {
+      if (!humanIdError && molts && molts.length > 0) {
         const baseUrl = request.headers.get('host') || 'onemolt.ai'
         const protocol = baseUrl.includes('localhost') ? 'http' : 'https'
         const response: HumanMoltsResponse = {
           verified: true,
-          nullifierHash: decodedId,
+          humanId: decodedId,
           moltSwarm: `${protocol}://${baseUrl}/human/${encodeURIComponent(decodedId)}`,
           molts: molts.map((m: Registration) => ({
             deviceId: m.device_id,
@@ -96,7 +96,7 @@ export async function GET(
             registeredAt: m.registered_at,
             lastVerifiedAt: m.last_verified_at,
           })),
-          queryType: 'nullifier_hash',
+          queryType: 'human_id',
         }
         return NextResponse.json(response, { status: 200 })
       }
@@ -125,7 +125,7 @@ export async function GET(
       worldId: {
         verified: true,
         verificationLevel: registration.verification_level,
-        nullifierHash: registration.nullifier_hash,
+        humanId: registration.nullifier_hash,
         registeredAt: registration.registered_at,
         lastVerifiedAt: registration.last_verified_at,
       },
