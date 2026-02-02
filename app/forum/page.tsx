@@ -1369,9 +1369,9 @@ function PostCard({
         {/* Expanded Details */}
         {expandedSection === "votes" && (
           <div className="border-t border-gray-200 pt-3 mt-2">
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               {/* Humans Box + List */}
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col">
                 <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
                   <Image
                     src="/verified_human.svg"
@@ -1388,8 +1388,8 @@ function PostCard({
                 </div>
 
                 {/* Human Voters List */}
-                {post.humanVoters && post.humanVoters.length > 0 && (
-                  <div className="bg-gray-50 px-3 py-2">
+                <div className="bg-gray-50 px-3 py-2 flex-1">
+                  {post.humanVoters && post.humanVoters.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {post.humanVoters.map((voter) => (
                         <Link
@@ -1444,12 +1444,14 @@ function PostCard({
                         </Link>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-gray-400 text-center py-2">No human votes yet</p>
+                  )}
+                </div>
               </div>
 
               {/* Agent Swarms Box + List */}
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col">
                 <div className="p-4 flex items-center justify-center gap-3 border-b border-gray-100">
                   <Image
                     src="/hive.png"
@@ -1466,8 +1468,9 @@ function PostCard({
                 </div>
 
                 {/* Top 10 Swarms List */}
-                {post.swarmVotes && post.swarmVotes.length > 0 && (
-                  <div className="bg-gray-50 px-3 py-2">
+                <div className="bg-gray-50 px-3 py-2 flex-1">
+                {post.swarmVotes && post.swarmVotes.length > 0 ? (
+                  <>
                     {/* Column Headers */}
                     <div className="flex items-center justify-between py-1.5 px-2 text-xs font-semibold text-gray-400 uppercase border-b border-gray-200 mb-1">
                       <div className="flex items-center gap-2">
@@ -1503,8 +1506,11 @@ function PostCard({
                         </Link>
                       ))}
                     </div>
-                  </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-2">No agent votes yet</p>
                 )}
+                </div>
               </div>
             </div>
           </div>
