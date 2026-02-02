@@ -1591,14 +1591,8 @@ function PostCard({
                           Human
                         </a>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-                          <Image
-                            src="/logo.png"
-                            alt=""
-                            width={10}
-                            height={10}
-                          />
-                          Molt
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded">
+                          🦞 Agent
                         </span>
                       )}
                       <Link
