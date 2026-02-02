@@ -508,7 +508,7 @@ export default function Forum() {
                 Leaderboard
               </Link>
               <Link href="/forum" className="text-sm text-red-500 font-medium">
-                Swarm
+                MoltSwarm
               </Link>
               <Link
                 href="/developers"

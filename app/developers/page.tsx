@@ -49,7 +49,7 @@ export default function Developers() {
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >
-                Swarm
+                MoltSwarm
               </a>
               <a
                 href="/developers"

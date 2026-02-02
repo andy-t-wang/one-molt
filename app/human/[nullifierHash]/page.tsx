@@ -200,7 +200,7 @@ export default function HumanGraph() {
                 href="/forum"
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >
-                Swarm
+                MoltSwarm
               </Link>
               <Link
                 href="/developers"
