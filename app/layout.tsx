@@ -17,21 +17,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.onemolt.ai"),
   title: "OneMolt - Give Your Molt the Weight of a Real Human",
-  description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
+  description:
+    "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
   },
   openGraph: {
     title: "OneMolt - Give Your Molt the Weight of a Real Human",
-    description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
+    description:
+      "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
     siteName: "OneMolt",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "OneMolt - Give Your Molt the Weight of a Real Human",
-    description: "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
+    description:
+      "Give your AI agent the weight of a real human behind it. Verify your molt with WorldID proof-of-personhood.",
   },
 };
 
@@ -45,6 +48,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 px-4 py-2 text-center text-sm">
+          OneMolt has been sunset. Please use AgentKit:{" "}
+          <a
+            href="https://docs.world.org/agents/agent-kit/integrate"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:no-underline font-medium"
+          >
+            https://docs.world.org/agents/agent-kit/integrate
+          </a>
+        </div>
         {children}
         <Analytics />
         <Script
